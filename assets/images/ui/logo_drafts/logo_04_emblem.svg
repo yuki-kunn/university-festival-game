@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" width="900" height="320">
+  <defs>
+    <radialGradient id="glow4" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#8cf0c0" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#8cf0c0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="320" fill="#0c0e16"/>
+  <ellipse cx="450" cy="120" rx="300" ry="140" fill="url(#glow4)"/>
+
+  <!-- 紋章の外周（六芒星風の魔法陣サークル） -->
+  <g transform="translate(450,115)" stroke="#a68cf0" fill="none" opacity="0.75">
+    <circle r="95" stroke-width="1.5"/>
+    <circle r="82" stroke-width="1"/>
+    <g stroke-width="1" opacity="0.8">
+      <polygon points="0,-90 78,45 -78,45"/>
+      <polygon points="0,90 78,-45 -78,-45"/>
+    </g>
+    <!-- 星の頂点に小さな点 -->
+    <g fill="#a68cf0" stroke="none">
+      <circle cx="0" cy="-90" r="3"/>
+      <circle cx="78" cy="45" r="3"/>
+      <circle cx="-78" cy="45" r="3"/>
+      <circle cx="0" cy="90" r="3"/>
+      <circle cx="78" cy="-45" r="3"/>
+      <circle cx="-78" cy="-45" r="3"/>
+    </g>
+  </g>
+
+  <!-- 中央に「無」の一文字（紋章の核） -->
+  <text x="450" y="140" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="70"
+        fill="#f5f3fa" text-anchor="middle" opacity="0.9">無</text>
+
+  <!-- タイトル本文 -->
+  <text x="450" y="255" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="72"
+        fill="#f5f3fa" letter-spacing="16" text-anchor="middle">不在証明</text>
+
+  <text x="450" y="295" font-family="sans-serif" font-size="16" letter-spacing="5"
+        fill="#d4cfe0" text-anchor="middle" opacity="0.8">栗川学園オカルト研究部 &#8212; ALIBI</text>
+</svg>

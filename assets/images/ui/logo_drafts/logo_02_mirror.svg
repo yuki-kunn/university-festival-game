@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" width="900" height="320">
+  <defs>
+    <linearGradient id="mirrorFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a68cf0" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a68cf0" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow2" cx="50%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#8cbdf0" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#8cbdf0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="320" fill="#0a0c13"/>
+  <ellipse cx="450" cy="150" rx="420" ry="150" fill="url(#glow2)"/>
+
+  <!-- 鏡の水平線 -->
+  <line x1="120" y1="168" x2="780" y2="168" stroke="#4a3f66" stroke-width="1" opacity="0.6"/>
+
+  <!-- 本体（正しい文字） -->
+  <text x="450" y="150" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="100"
+        fill="#f5f3fa" letter-spacing="20" text-anchor="middle">不在証明</text>
+
+  <!-- 鏡像（反転・少しズレて青みがかった） -->
+  <g transform="translate(0,336) scale(1,-1)" opacity="0.4">
+    <text x="454" y="150" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="100"
+          fill="#8cbdf0" letter-spacing="20" text-anchor="middle">不在証明</text>
+  </g>
+  <rect x="0" y="168" width="900" height="152" fill="url(#mirrorFade)" opacity="0.5"/>
+
+  <!-- 鏡のひび割れライン -->
+  <g stroke="#d4cfe0" stroke-width="1.2" opacity="0.55" fill="none">
+    <path d="M 450 168 L 470 190 L 460 215 L 490 245"/>
+    <path d="M 450 168 L 430 200 L 445 230"/>
+    <path d="M 450 168 L 500 175 L 540 178"/>
+  </g>
+
+  <text x="450" y="290" font-family="sans-serif" font-size="20" letter-spacing="6"
+        fill="#d4cfe0" text-anchor="middle" opacity="0.85">ALIBI &#8212; UNIVERSITY FESTIVAL GAME</text>
+</svg>

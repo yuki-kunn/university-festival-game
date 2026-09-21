@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>タイトルロゴ比較 - 不在証明</title>
+<style>
+  body {
+    margin: 0;
+    padding: 2rem;
+    background: #050409;
+    color: #f5f3fa;
+    font-family: sans-serif;
+  }
+  h1 {
+    text-align: center;
+    font-weight: normal;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    color: #d4cfe0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #14121a;
+    border: 1px solid #2a2536;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card-label {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    background: #1c1926;
+    border-bottom: 1px solid #2a2536;
+  }
+  .card-label .num {
+    display: inline-block;
+    background: #a68cf0;
+    color: #14121a;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 0.1em 0.5em;
+    margin-right: 0.6em;
+  }
+  .card img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .desc {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.85rem;
+    color: #b0aabf;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<h1>タイトルロゴ比較 — 「不在証明」</h1>
+<div class="grid">
+
+  <div class="card">
+    <div class="card-label"><span class="num">1</span>欠けた文字</div>
+    <img src="logo_01_broken.svg" alt="パターン1">
+    <div class="desc">1文字目「不」がノイズで崩れ、最後の「明」が右へフェードアウトする。「存在の欠如」を文字そのものの破綻で表現。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">2</span>鏡・対称の割れ</div>
+    <img src="logo_02_mirror.svg" alt="パターン2">
+    <div class="desc">下半分に反転した鏡像（青みがかった別の色）を配置し、ひび割れラインを追加。「鏡の中のもう一つの部」の世界観と直結。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">3</span>シンプル明朝＋発光</div>
+    <img src="logo_03_simple.svg" alt="パターン3">
+    <div class="desc">現行のタイトル画面の延長線上。派手な演出はせず、発光と一本線の装飾のみで完成度を上げた版。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">4</span>学園モチーフ（紋章）</div>
+    <img src="logo_04_emblem.svg" alt="パターン4">
+    <div class="desc">六芒星の魔法陣風サークルに「無」の一文字を配し、オカルト研究部らしさを強調。サブタイトルに学園名も明記。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">5</span>欠けた文字 × 鏡の割れ（複合）</div>
+    <img src="logo_05_broken_mirror.svg" alt="パターン5">
+    <div class="desc">パターン1と2の要素を統合。1文字目の欠落＋下半分のピンク寄り鏡像で、二つのテーマを同時に表現。</div>
+  </div>
+
+</div>
+</body>
+</html>
