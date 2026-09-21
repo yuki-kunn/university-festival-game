@@ -2,8 +2,17 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>タイトルロゴ比較 - 不在証明</title>
+<title>タイトルロゴ比較 - 不在証明（v2 / Webフォント版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Cormorant+Garamond:wght@500&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #0e0c13;
+    --glow: #7c5fd4;
+    --text: #f5f3fa;
+    --sub: #a89fc0;
+  }
   body {
     margin: 0;
     padding: 2rem;
@@ -15,14 +24,20 @@
     text-align: center;
     font-weight: normal;
     letter-spacing: 0.1em;
-    margin-bottom: 2rem;
+    margin-bottom: 0.3rem;
     color: #d4cfe0;
+  }
+  .note {
+    text-align: center;
+    color: #8a80a0;
+    font-size: 0.82rem;
+    margin-bottom: 2rem;
   }
   .grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    max-width: 1000px;
+    max-width: 900px;
     margin: 0 auto;
   }
   .card {
@@ -38,19 +53,24 @@
     background: #1c1926;
     border-bottom: 1px solid #2a2536;
   }
-  .card-label .num {
+  .card-label .tag {
     display: inline-block;
-    background: #a68cf0;
-    color: #14121a;
+    background: #7c5fd4;
+    color: #f5f3fa;
     font-weight: bold;
     border-radius: 4px;
-    padding: 0.1em 0.5em;
+    padding: 0.1em 0.6em;
     margin-right: 0.6em;
+    font-family: sans-serif;
   }
-  .card img {
-    display: block;
-    width: 100%;
-    height: auto;
+  .stage {
+    position: relative;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse 70% 65% at 50% 50%, rgba(124,95,212,0.32) 0%, transparent 100%), var(--bg);
+    overflow: hidden;
   }
   .desc {
     padding: 0.8rem 1.2rem;
@@ -58,40 +78,112 @@
     color: #b0aabf;
     line-height: 1.6;
   }
+
+  .logo-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 4.6rem;
+    letter-spacing: 0.18em;
+    color: var(--text);
+    margin: 0;
+    line-height: 1;
+    position: relative;
+    display: inline-block;
+  }
+  .logo-en {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    letter-spacing: 0.5em;
+    color: var(--sub);
+    margin-top: 1rem;
+    text-align: center;
+  }
+  .divider {
+    width: 220px;
+    height: 1px;
+    background: var(--glow);
+    opacity: 0.5;
+    margin: 0.8rem auto 0;
+  }
+
+  /* --- 案A: 骨格保持 + 最後の1文字だけ透明化 --- */
+  .a-wrap { display: flex; flex-direction: column; align-items: center; }
+  .a-title .fade-char {
+    background: linear-gradient(to right, var(--text) 55%, transparent 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* --- 案B: 色ずれ二重化 + 規則的グリッチ帯 --- */
+  .b-wrap { display: flex; flex-direction: column; align-items: center; }
+  .b-title { position: relative; }
+  .b-title .ghost {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+  }
+  .b-title .ghost.cyan { color: #6fa8d8; opacity: 0.5; transform: translate(-2px, -2px); }
+  .b-title .ghost.magenta { color: #d86fa0; opacity: 0.45; transform: translate(2px, 2px); }
+  .b-title .main {
+    position: relative;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0, transparent 10px,
+      rgba(255,255,255,0.02) 10px, rgba(255,255,255,0.02) 12px
+    );
+    clip-path: polygon(0 0, 100% 0, 100% 22%, 0 22%, 0 22%, 3px 22%, 3px 30%, 0 30%, 0 100%, 100% 100%, 100% 30%, 3px 30%);
+  }
+
+  /* --- 案C: ミニマル --- */
+  .c-title {
+    font-weight: 700;
+  }
 </style>
 </head>
 <body>
-<h1>タイトルロゴ比較 — 「不在証明」</h1>
+<h1>タイトルロゴ比較 v2 — 「不在証明」（Webフォント版）</h1>
+<p class="note">Noto Serif JP（Google Fonts）を使用。実機のHiragino Mincho / Yu Minchoに近いプロポーションで確認できます</p>
 <div class="grid">
 
   <div class="card">
-    <div class="card-label"><span class="num">1</span>欠けた文字</div>
-    <img src="logo_01_broken.svg" alt="パターン1">
-    <div class="desc">1文字目「不」がノイズで崩れ、最後の「明」が右へフェードアウトする。「存在の欠如」を文字そのものの破綻で表現。</div>
+    <div class="card-label"><span class="tag">A</span>骨格保持＋部分透明化</div>
+    <div class="stage">
+      <div class="a-wrap">
+        <h2 class="logo-title a-title">不在証<span class="fade-char">明</span></h2>
+        <div class="divider"></div>
+        <span class="logo-en">ALIBI</span>
+      </div>
+    </div>
+    <div class="desc">3文字はしっかり描き、最後の1文字「明」だけをグラデーションで右へ静かに透明化。全体は崩さず1点だけの処理に留める。</div>
   </div>
 
   <div class="card">
-    <div class="card-label"><span class="num">2</span>鏡・対称の割れ</div>
-    <img src="logo_02_mirror.svg" alt="パターン2">
-    <div class="desc">下半分に反転した鏡像（青みがかった別の色）を配置し、ひび割れラインを追加。「鏡の中のもう一つの部」の世界観と直結。</div>
+    <div class="card-label"><span class="tag">B</span>色ずれ二重化＋規則的グリッチ</div>
+    <div class="stage">
+      <div class="b-wrap">
+        <h2 class="logo-title b-title">
+          <span class="ghost cyan">不在証明</span>
+          <span class="ghost magenta">不在証明</span>
+          <span class="main">不在証明</span>
+        </h2>
+        <div class="divider"></div>
+        <span class="logo-en">ALIBI</span>
+      </div>
+    </div>
+    <div class="desc">背後にシアン・マゼンタの複製を2pxだけオフセットして色収差を演出。上部の一部だけ帯を3pxずらす規則的グリッチ。ランダムノイズは不使用。</div>
   </div>
 
   <div class="card">
-    <div class="card-label"><span class="num">3</span>シンプル明朝＋発光</div>
-    <img src="logo_03_simple.svg" alt="パターン3">
-    <div class="desc">現行のタイトル画面の延長線上。派手な演出はせず、発光と一本線の装飾のみで完成度を上げた版。</div>
-  </div>
-
-  <div class="card">
-    <div class="card-label"><span class="num">4</span>学園モチーフ（紋章）</div>
-    <img src="logo_04_emblem.svg" alt="パターン4">
-    <div class="desc">六芒星の魔法陣風サークルに「無」の一文字を配し、オカルト研究部らしさを強調。サブタイトルに学園名も明記。</div>
-  </div>
-
-  <div class="card">
-    <div class="card-label"><span class="num">5</span>欠けた文字 × 鏡の割れ（複合）</div>
-    <img src="logo_05_broken_mirror.svg" alt="パターン5">
-    <div class="desc">パターン1と2の要素を統合。1文字目の欠落＋下半分のピンク寄り鏡像で、二つのテーマを同時に表現。</div>
+    <div class="card-label"><span class="tag">C</span>ミニマル（装飾最小限）</div>
+    <div class="stage">
+      <div class="a-wrap">
+        <h2 class="logo-title c-title">不在証明</h2>
+        <div class="divider"></div>
+        <span class="logo-en">ALIBI</span>
+      </div>
+    </div>
+    <div class="desc">装飾要素を一切排除。太めのウェイト（700）と字間だけで存在感を出す最もシンプルな案。</div>
   </div>
 
 </div>

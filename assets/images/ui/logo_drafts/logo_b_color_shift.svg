@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="800" height="220">
+  <defs>
+    <radialGradient id="bgGlowB" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#7c5fd4" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#7c5fd4" stop-opacity="0"/>
+    </radialGradient>
+    <!-- 一定間隔の帯でクリップし、規則的にずらす（ランダムノイズではない） -->
+    <clipPath id="bandTop">
+      <rect x="0" y="0" width="800" height="6"/>
+      <rect x="0" y="24" width="800" height="6"/>
+      <rect x="0" y="48" width="800" height="6"/>
+      <rect x="0" y="72" width="800" height="6"/>
+      <rect x="0" y="96" width="800" height="6"/>
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="800" height="220" fill="#0a0912"/>
+  <ellipse cx="400" cy="105" rx="360" ry="110" fill="url(#bgGlowB)"/>
+
+  <!-- 背後：シアン寄りの複製。2pxだけ左上にオフセット -->
+  <text x="398" y="128" font-family="'Hiragino Mincho ProN','Yu Mincho',serif"
+        font-size="92" font-weight="600" fill="#6fa8d8" letter-spacing="14"
+        text-anchor="middle" opacity="0.55">不在証明</text>
+
+  <!-- 背後：マゼンタ寄りの複製。2pxだけ右下にオフセット -->
+  <text x="402" y="132" font-family="'Hiragino Mincho ProN','Yu Mincho',serif"
+        font-size="92" font-weight="600" fill="#d86fa0" letter-spacing="14"
+        text-anchor="middle" opacity="0.5">不在証明</text>
+
+  <!-- 本体：中央、しっかりした白 -->
+  <text x="400" y="130" font-family="'Hiragino Mincho ProN','Yu Mincho',serif"
+        font-size="92" font-weight="600" fill="#f5f3fa" letter-spacing="14"
+        text-anchor="middle">不在証明</text>
+
+  <!-- 帯状の規則的グリッチ：文字上部だけ、等間隔の横帯を3pxだけ右へずらす -->
+  <g clip-path="url(#bandTop)" transform="translate(3,0)">
+    <text x="400" y="130" font-family="'Hiragino Mincho ProN','Yu Mincho',serif"
+          font-size="92" font-weight="600" fill="#f5f3fa" letter-spacing="14"
+          text-anchor="middle">不在証明</text>
+  </g>
+
+  <line x1="270" y1="160" x2="530" y2="160" stroke="#7c5fd4" stroke-width="1" opacity="0.5"/>
+
+  <text x="400" y="195" font-family="sans-serif" font-size="15" letter-spacing="7"
+        fill="#a89fc0" text-anchor="middle">ALIBI</text>
+</svg>
