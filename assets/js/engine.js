@@ -3,13 +3,12 @@
 
   const SCRIPT_SOURCES = {
     common_intro: "data/script_common.json",
-    route_marico: "data/script_marico.json"
+    route_marico: "data/script_marico.json",
+    route_niko: "data/script_niko.json",
+    route_nina: "data/script_nina.json"
   };
 
-  const NOT_IMPLEMENTED_ROUTES = {
-    route_niko: "ニコルートは現在製作中です。今後のアップデートをお待ちください。",
-    route_nina: "ニナルートは現在製作中です。今後のアップデートをお待ちください。"
-  };
+  const NOT_IMPLEMENTED_ROUTES = {};
 
   const scriptCache = {};
 
@@ -65,6 +64,8 @@
     let bg = "clubroom";
     if (scriptId === "common_intro" && lineIndex >= 25 && lineIndex < 42) bg = "corridor";
     if (scriptId === "route_marico") bg = "broadcast";
+    if (scriptId === "route_niko") bg = "library";
+    if (scriptId === "route_nina") bg = "mirror";
     el.bgLayer.setAttribute("data-bg", bg);
   }
 
