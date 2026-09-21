@@ -43,18 +43,60 @@ html, body {
 .title-wrap {
   text-align: center;
 }
-.game-title {
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
-  letter-spacing: 0.3em;
-  margin: 0 0 0.5rem 0;
-  text-shadow: 0 0 24px rgba(138, 111, 216, 0.6);
+
+/* タイトルロゴ（B案：色ずれ二重化＋規則的グリッチ） */
+.game-logo {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  font-family: 'Noto Serif JP', serif;
+  font-size: clamp(2.6rem, 8vw, 4.6rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1;
+}
+.game-logo-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  color: transparent;
+  -webkit-text-stroke: 0;
+}
+.game-logo-ghost.cyan {
+  color: #6fa8d8;
+  opacity: 0.5;
+  transform: translate(-2px, -2px);
+}
+.game-logo-ghost.magenta {
+  color: #d86fa0;
+  opacity: 0.45;
+  transform: translate(2px, 2px);
+}
+.game-logo-main {
+  position: relative;
+  display: inline-block;
+  color: var(--color-text);
+  text-shadow: 0 0 24px rgba(138, 111, 216, 0.5);
+  clip-path: polygon(
+    0 0, 100% 0, 100% 22%, 0 22%,
+    0 22%, 3px 22%, 3px 30%, 0 30%,
+    0 100%, 100% 100%, 100% 30%, 3px 30%
+  );
+}
+.game-logo-divider {
+  width: min(60%, 260px);
+  height: 1px;
+  background: var(--color-accent);
+  opacity: 0.5;
+  margin: 1rem auto 0.8rem auto;
 }
 .game-subtitle {
   color: var(--color-narration);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.35em;
   margin-bottom: 3rem;
-  font-family: sans-serif;
-  font-size: 0.85rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.9rem;
 }
 
 .btn-primary {
