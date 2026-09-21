@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不在証明</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- タイトル画面 -->
+  <section id="screen-title" class="screen active">
+    <div class="title-wrap">
+      <h1 class="game-title">不在証明</h1>
+      <p class="game-subtitle">— University Festival Game (RPG Part) —</p>
+      <button id="btn-start" class="btn-primary">はじめる</button>
+    </div>
+  </section>
+
+  <!-- ゲーム画面（ノベルパート） -->
+  <section id="screen-novel" class="screen">
+    <div class="bg-layer" id="bg-layer"></div>
+
+    <div class="char-layer" id="char-layer">
+      <img id="char-sprite" class="char-sprite" src="" alt="" hidden>
+    </div>
+
+    <div class="textbox" id="textbox">
+      <div class="speaker-name" id="speaker-name"></div>
+      <div class="line-text" id="line-text"></div>
+      <div class="next-indicator" id="next-indicator">▼</div>
+    </div>
+
+    <div class="choice-layer" id="choice-layer" hidden>
+      <div class="choice-prompt" id="choice-prompt"></div>
+      <div class="choice-list" id="choice-list"></div>
+    </div>
+  </section>
+
+  <!-- 未実装ルート案内画面 -->
+  <section id="screen-notyet" class="screen">
+    <div class="notyet-wrap">
+      <p id="notyet-message">このルートは現在製作中です。</p>
+      <button id="btn-back-title" class="btn-primary">タイトルへ戻る</button>
+    </div>
+  </section>
+
+  <!-- エンド画面 -->
+  <section id="screen-end" class="screen">
+    <div class="end-wrap">
+      <p id="end-message"></p>
+      <button id="btn-restart" class="btn-primary">タイトルへ戻る</button>
+    </div>
+  </section>
+
+  <script src="assets/js/engine.js"></script>
+</body>
+</html>

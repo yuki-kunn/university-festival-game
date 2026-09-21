@@ -1,0 +1,241 @@
+:root {
+  --color-bg: #14121a;
+  --color-panel: #1f1c28;
+  --color-text: #f5f3fa;
+  --color-accent: #a68cf0;
+  --color-accent-soft: #4a3f66;
+  --color-marico: #f08cc0;
+  --color-niko: #8cbdf0;
+  --color-nina: #8cf0c0;
+  --color-narration: #d4cfe0;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.screen.active {
+  display: flex;
+}
+
+/* ---------- タイトル画面 ---------- */
+#screen-title {
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #241f30 0%, #0e0c13 100%);
+}
+.title-wrap {
+  text-align: center;
+}
+.game-title {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  letter-spacing: 0.3em;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 24px rgba(138, 111, 216, 0.6);
+}
+.game-subtitle {
+  color: var(--color-narration);
+  letter-spacing: 0.1em;
+  margin-bottom: 3rem;
+  font-family: sans-serif;
+  font-size: 0.85rem;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  padding: 0.9em 2.4em;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: sans-serif;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(138, 111, 216, 0.4);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ---------- ノベル画面 ---------- */
+#screen-novel {
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #201c2b 0%, #12101a 100%);
+  transition: background 0.4s ease;
+  z-index: 0;
+}
+.bg-layer[data-bg="clubroom"] { background: linear-gradient(180deg, #2c2438 0%, #171320 100%); }
+.bg-layer[data-bg="corridor"] { background: linear-gradient(180deg, #232030 0%, #0e0d15 100%); }
+.bg-layer[data-bg="broadcast"] { background: linear-gradient(180deg, #1c2233 0%, #0a0c14 100%); }
+
+.char-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
+}
+.char-sprite {
+  height: 65vh;
+  max-height: 620px;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+}
+
+/* キャラ不在時のダミー表示（色付きシルエット） */
+.char-placeholder {
+  width: 220px;
+  height: 60vh;
+  max-height: 560px;
+  border-radius: 110px 110px 0 0;
+  opacity: 0.85;
+  position: absolute;
+  bottom: 0;
+  z-index: 1;
+}
+.char-placeholder.marico { background: linear-gradient(180deg, var(--color-marico), transparent 120%); }
+.char-placeholder.niko { background: linear-gradient(180deg, var(--color-niko), transparent 120%); }
+.char-placeholder.nina { background: linear-gradient(180deg, var(--color-nina), transparent 120%); }
+
+.textbox {
+  position: relative;
+  z-index: 2;
+  margin: 0 auto 4vh auto;
+  width: min(90%, 860px);
+  min-height: 160px;
+  background: rgba(20, 18, 26, 0.92);
+  border: 1px solid var(--color-accent-soft);
+  border-radius: 16px;
+  padding: 1.6rem 2rem 1.4rem 2rem;
+  backdrop-filter: blur(6px);
+}
+
+.speaker-name {
+  font-size: 1.05rem;
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.6rem;
+  min-height: 1.4em;
+  font-weight: bold;
+}
+.speaker-name[data-speaker="マリコ"] { color: var(--color-marico); }
+.speaker-name[data-speaker="ニコ"] { color: var(--color-niko); }
+.speaker-name[data-speaker="ニナ"] { color: var(--color-nina); }
+.speaker-name[data-speaker="放送"] { color: #ff6b6b; }
+
+.line-text {
+  font-size: 1.15rem;
+  line-height: 1.9;
+  min-height: 3.8em;
+  white-space: pre-wrap;
+}
+
+.narration .line-text {
+  color: var(--color-narration);
+  font-size: 1.05rem;
+}
+
+.next-indicator {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 1.2rem;
+  color: var(--color-accent);
+  animation: bounce 1.4s infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+/* ---------- 選択肢 ---------- */
+.choice-layer[hidden] {
+  display: none;
+}
+.choice-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  background: rgba(10, 9, 14, 0.75);
+}
+.choice-prompt {
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: min(90%, 460px);
+}
+.choice-btn {
+  background: var(--color-panel);
+  border: 1px solid var(--color-accent-soft);
+  color: var(--color-text);
+  padding: 0.9em 1.4em;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.choice-btn:hover {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+/* ---------- 未実装 / エンド画面 ---------- */
+#screen-notyet, #screen-end {
+  align-items: center;
+  justify-content: center;
+  background: #0e0c13;
+  text-align: center;
+}
+.notyet-wrap p, .end-wrap p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  line-height: 1.8;
+  padding: 0 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .textbox { padding: 1.2rem 1.3rem; min-height: 140px; }
+  .line-text { font-size: 1rem; }
+  .char-sprite, .char-placeholder { height: 45vh; }
+}
