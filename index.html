@@ -53,6 +53,34 @@
     </div>
   </section>
 
+  <!-- 推理クイズ画面 -->
+  <section id="screen-quiz" class="screen">
+    <div class="quiz-wrap">
+      <div class="quiz-header">
+        <h2 class="quiz-title" id="quiz-title"></h2>
+        <p class="quiz-prompt" id="quiz-prompt"></p>
+      </div>
+
+      <!-- 矛盾指摘型：カードを2枚選ぶ -->
+      <div class="quiz-cards quiz-cards--contradiction" id="quiz-cards-contradiction" hidden></div>
+
+      <!-- 時系列並べ替え型：クリックした順に並べる -->
+      <div class="quiz-timeline" id="quiz-timeline" hidden>
+        <div class="quiz-timeline-slots" id="quiz-timeline-slots"></div>
+        <div class="quiz-cards quiz-cards--timeline" id="quiz-cards-timeline"></div>
+        <button id="btn-timeline-reset" class="btn-secondary">選び直す</button>
+      </div>
+
+      <button id="btn-quiz-submit" class="btn-primary" hidden>これで確定する</button>
+
+      <div class="quiz-result" id="quiz-result" hidden>
+        <p class="quiz-result-verdict" id="quiz-result-verdict"></p>
+        <p class="quiz-result-explain" id="quiz-result-explain"></p>
+        <button id="btn-quiz-next" class="btn-primary">次へ</button>
+      </div>
+    </div>
+  </section>
+
   <!-- エンド画面 -->
   <section id="screen-end" class="screen">
     <div class="end-wrap">
