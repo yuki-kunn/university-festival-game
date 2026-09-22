@@ -20,12 +20,15 @@
   const el = {
     screens: {
       title: document.getElementById("screen-title"),
+      nameInput: document.getElementById("screen-name-input"),
       novel: document.getElementById("screen-novel"),
       notyet: document.getElementById("screen-notyet"),
       end: document.getElementById("screen-end"),
       quiz: document.getElementById("screen-quiz")
     },
     btnStart: document.getElementById("btn-start"),
+    inputPlayerName: document.getElementById("input-player-name"),
+    btnNameConfirm: document.getElementById("btn-name-confirm"),
     btnBackTitle: document.getElementById("btn-back-title"),
     btnRestart: document.getElementById("btn-restart"),
     novelScreen: document.getElementById("screen-novel"),
@@ -40,6 +43,11 @@
     choiceList: document.getElementById("choice-list"),
     notyetMessage: document.getElementById("notyet-message"),
     endMessage: document.getElementById("end-message"),
+
+    itemViewer: document.getElementById("item-viewer"),
+    itemViewerCaption: document.getElementById("item-viewer-caption"),
+    itemViewerImage: document.getElementById("item-viewer-image"),
+    btnItemClose: document.getElementById("btn-item-close"),
 
     quizScreen: document.getElementById("screen-quiz"),
     quizTitle: document.getElementById("quiz-title"),
@@ -67,9 +75,12 @@
       routeId: null,
       bond: null,
       quiz1Correct: null,
-      quiz2Correct: null
+      quiz2Correct: null,
+      playerName: null
     }
   };
+
+  const DEFAULT_PLAYER_NAME = "＜主人公＞";
 
   const quizState = {
     step: null,
@@ -133,6 +144,65 @@
     step();
   }
 
+  const ITEM_IMAGE_SOURCES = {
+    old_roster: "assets/images/items/old_roster.svg",
+    library_card: "assets/images/items/library_card.svg",
+    broadcast_mic: "assets/images/items/broadcast_mic.svg",
+    group_photo: "assets/images/items/group_photo.svg"
+  };
+  const itemSvgCache = {};
+
+  async function showItemViewer(itemId, caption) {
+    el.itemViewerCaption.textContent = caption;
+    el.itemViewerImage.innerHTML = "";
+
+    const src = ITEM_IMAGE_SOURCES[itemId];
+    if (src) {
+      const svgMarkup = await loadItemSvg(itemId, src);
+      el.itemViewerImage.innerHTML = svgMarkup;
+      if (itemId === "old_roster") {
+        applyPlayerNameToRoster();
+      }
+    }
+
+    el.itemViewer.hidden = false;
+  }
+
+  async function loadItemSvg(itemId, src) {
+    if (itemSvgCache[itemId]) return itemSvgCache[itemId];
+    const res = await fetch(src);
+    const text = await res.text();
+    itemSvgCache[itemId] = text;
+    return text;
+  }
+
+  function applyPlayerNameToRoster() {
+    const nameEl = el.itemViewerImage.querySelector("#player-name-text");
+    if (!nameEl) return;
+    const name = state.playthrough.playerName || DEFAULT_PLAYER_NAME;
+    nameEl.textContent = name;
+  }
+
+  el.btnItemClose.addEventListener("click", (e) => {
+    e.stopPropagation();
+    el.itemViewer.hidden = true;
+    advanceAfterItem();
+  });
+
+  function advanceAfterItem() {
+    state.index++;
+    if (state.index >= state.lines.length) {
+      const script = scriptCache[state.currentScriptId];
+      if (script.choice) {
+        showChoice(script.choice);
+      } else {
+        endScript(script);
+      }
+      return;
+    }
+    renderLine();
+  }
+
   function skipTyping() {
     clearTimeout(state.typingTimer);
     const line = state.lines[state.index];
@@ -143,6 +213,12 @@
 
   function renderLine() {
     const line = state.lines[state.index];
+
+    if (line.item) {
+      showItemViewer(line.item, line.caption || "");
+      return;
+    }
+
     setBackground(state.currentScriptId, state.index);
     setCharacterPlaceholder(line.speaker);
 
@@ -159,6 +235,7 @@
   }
 
   function advance() {
+    if (!el.itemViewer.hidden) return;
     if (state.isTyping) {
       skipTyping();
       return;
@@ -239,8 +316,26 @@
   });
 
   el.btnStart.addEventListener("click", () => {
-    startScript("common_intro");
+    el.inputPlayerName.value = "";
+    showScreen("nameInput");
+    el.inputPlayerName.focus();
   });
+
+  el.btnNameConfirm.addEventListener("click", () => {
+    confirmPlayerNameAndStart();
+  });
+
+  el.inputPlayerName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      confirmPlayerNameAndStart();
+    }
+  });
+
+  function confirmPlayerNameAndStart() {
+    const raw = el.inputPlayerName.value.trim();
+    state.playthrough.playerName = raw.length > 0 ? raw : DEFAULT_PLAYER_NAME;
+    startScript("common_intro");
+  }
 
   el.btnBackTitle.addEventListener("click", () => {
     showScreen("title");
