@@ -50,7 +50,7 @@
 
       <text x="90" y="226" font-size="11" fill="#6a5f48">◆一年</text>
       <text x="105" y="246">宝部　真理子</text>
-      <text x="105" y="266">＜主人公＞</text>
+      <text x="105" y="266" id="player-name-text" data-default="＜主人公＞">＜主人公＞</text>
     </g>
 
     <!-- 右ページ：古い代の記録。1名だけ名前が消えかけている（Bの示唆） -->
