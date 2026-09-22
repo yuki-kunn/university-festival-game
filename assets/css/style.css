@@ -140,6 +140,40 @@ html, body {
   margin: 0.9rem 0 2rem 0;
 }
 
+/* ---------- 素材ロード中の待機画面 ---------- */
+#screen-loading {
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #241f30 0%, #0e0c13 100%);
+}
+.loading-wrap {
+  text-align: center;
+}
+.loading-spinner {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1.6rem auto;
+  border: 3px solid var(--color-accent-soft);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: loading-spin 0.9s linear infinite;
+}
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text);
+  margin-bottom: 0.8rem;
+}
+.loading-hint {
+  font-size: 0.78rem;
+  color: var(--color-narration);
+  opacity: 0.7;
+}
+
 .btn-primary {
   background: var(--color-accent);
   color: #fff;

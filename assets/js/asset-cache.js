@@ -125,21 +125,6 @@ window.AssetCache = (() => {
     });
   }
 
-  async function clearGroupFromIndexedDb(groupName) {
-    const db = await openDb();
-    if (!db) return;
-    return new Promise((resolve) => {
-      try {
-        const tx = db.transaction(GROUP_STORE, "readwrite");
-        tx.objectStore(GROUP_STORE).delete(groupName);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => resolve();
-      } catch (err) {
-        resolve();
-      }
-    });
-  }
-
   // GAS Web Appは、再デプロイ直後の反映待ちや実行環境のコールドスタートにより
   // 断続的に404（HTMLのエラーページ）を返すことがある。実測ではコールドスタート
   // 自体に最大50秒程度かかることがあり（2回目以降は3〜5秒で安定）、それに対応
@@ -173,10 +158,29 @@ window.AssetCache = (() => {
     return res.json();
   }
 
-  async function fetchGroup(groupName) {
-    if (loadedGroups.has(groupName)) return; // 二重取得防止（IndexedDB由来の記録も含む）
-    loadedGroups.add(groupName);
+  // 進行中のグループ取得Promiseを保持する。同じグループに対して複数箇所から
+  // fetchGroupが呼ばれても（例：起動時の先行取得＋名前確定時の待機）、
+  // 実際のリクエストは1回だけ行い、呼び出し元は全員「同じ取得が完了するの」を
+  // 正しく待てるようにする（呼び出し元がローディング画面の要否を正確に判断できる）。
+  const inFlightFetches = new Map();
 
+  function fetchGroup(groupName) {
+    if (loadedGroups.has(groupName)) return Promise.resolve(); // 取得完了済み（IndexedDB由来含む）
+
+    const existing = inFlightFetches.get(groupName);
+    if (existing) return existing; // 進行中の取得があれば、それをそのまま返す
+
+    // Map.set を同期的に（awaitの前に）行うことで、この直後に別の場所から
+    // 同じグループに対してfetchGroupが呼ばれても、必ずここで登録した
+    // Promiseを共有できるようにする（取得完了前に「取得済み」と誤判定させない）。
+    const promise = fetchGroupInternal(groupName).finally(() => {
+      inFlightFetches.delete(groupName);
+    });
+    inFlightFetches.set(groupName, promise);
+    return promise;
+  }
+
+  async function fetchGroupInternal(groupName) {
     const apiUrl = window.ASSET_API_URL;
     if (!apiUrl) return; // 未設定ならプレースホルダー運用のまま
 
@@ -195,6 +199,7 @@ window.AssetCache = (() => {
         if (data && data.errors && data.errors.length) {
           console.warn("[AssetCache] group=" + groupName + " errors:", data.errors);
         }
+        loadedGroups.add(groupName); // 取得成功が確定した時点で「完了」を記録する
         markGroupFetchedInIndexedDb(groupName); // 次回起動時に再取得しないよう記録
         return; // 成功
       } catch (err) {
@@ -203,9 +208,8 @@ window.AssetCache = (() => {
     }
 
     // リトライしても失敗した場合：プレースホルダー運用にフォールバックする
+    // （loadedGroupsには追加していないので、次にfetchGroupが呼ばれれば再試行される）
     console.warn("[AssetCache] group=" + groupName + " fetch failed after retry:", lastErr);
-    loadedGroups.delete(groupName); // 次にfetchGroupが呼ばれた際に再試行できるようにしておく
-    clearGroupFromIndexedDb(groupName);
   }
 
   function get(assetId) {
