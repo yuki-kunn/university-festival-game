@@ -65,9 +65,12 @@ var ASSET_GROUPS = {
   "mc_normal_f": ["common"],
   "clubroom_day": ["common"],
   "corridor": ["common"],
-  "group_photo_m": ["common"],
-  "group_photo_f": ["common"],
   "unknown_student": ["common"],
+
+  // --- extras: 集合写真など、共通導入の必須表示には使わず、
+  //     アイテムビューア等で個別に参照する画像（性別出し分けもここに含む） ---
+  "group_photo_m": ["extras"],
+  "group_photo_f": ["extras"],
 
   // --- route_marico: マリコルート選択後に必要 ---
   "marico_scared": ["route_marico"],
