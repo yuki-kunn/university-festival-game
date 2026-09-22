@@ -25,6 +25,16 @@
     </div>
   </section>
 
+  <!-- 名前入力画面 -->
+  <section id="screen-name-input" class="screen">
+    <div class="name-input-wrap">
+      <p class="name-input-label">あなたの名前を教えてください</p>
+      <input type="text" id="input-player-name" class="name-input-field" maxlength="12" placeholder="例：栗川　悠人" autocomplete="off">
+      <p class="name-input-hint">未入力のまま進むと「＜主人公＞」と表記されます</p>
+      <button id="btn-name-confirm" class="btn-primary">この名前で始める</button>
+    </div>
+  </section>
+
   <!-- ゲーム画面（ノベルパート） -->
   <section id="screen-novel" class="screen">
     <div class="bg-layer" id="bg-layer"></div>
@@ -42,6 +52,14 @@
     <div class="choice-layer" id="choice-layer" hidden>
       <div class="choice-prompt" id="choice-prompt"></div>
       <div class="choice-list" id="choice-list"></div>
+    </div>
+
+    <div class="item-viewer" id="item-viewer" hidden>
+      <div class="item-viewer-frame">
+        <div class="item-viewer-caption" id="item-viewer-caption"></div>
+        <div class="item-viewer-image" id="item-viewer-image"></div>
+        <button id="btn-item-close" class="btn-secondary">閉じる</button>
+      </div>
     </div>
   </section>
 
