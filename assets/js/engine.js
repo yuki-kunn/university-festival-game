@@ -107,31 +107,12 @@
     mirror: "mirror_closeup"
   };
 
-  // GAS APIから取得した画像マップ（素材ID -> Data URI）。未取得時は空のまま
-  let assetImages = {};
-  let assetApiLoaded = false;
-
-  async function loadAssetImages() {
-    const apiUrl = window.ASSET_API_URL;
-    if (!apiUrl) {
-      assetApiLoaded = true;
-      return;
-    }
-    try {
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      if (data && data.images) {
-        assetImages = data.images;
-      }
-      if (data && data.errors && data.errors.length) {
-        console.warn("asset API errors:", data.errors);
-      }
-    } catch (err) {
-      console.warn("asset API fetch failed, falling back to placeholders:", err);
-    } finally {
-      assetApiLoaded = true;
-    }
-  }
+  // ルートID -> 追加取得すべき素材グループ名
+  const ROUTE_ASSET_GROUP = {
+    route_marico: "route_marico",
+    route_niko: "route_niko",
+    route_nina: "route_nina"
+  };
 
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
@@ -155,7 +136,7 @@
     if (scriptId === "route_nina") bg = "mirror";
 
     const imageId = BG_IMAGE_ID[bg];
-    const dataUri = imageId && assetImages[imageId];
+    const dataUri = imageId && AssetCache.get(imageId);
     if (dataUri) {
       el.bgLayer.style.backgroundImage = "url('" + dataUri + "')";
       el.bgLayer.style.backgroundSize = "cover";
@@ -172,7 +153,7 @@
     if (!speaker || !CHAR_CLASS[speaker]) return;
 
     const imageId = CHAR_IMAGE_ID[speaker];
-    const dataUri = imageId && assetImages[imageId];
+    const dataUri = imageId && AssetCache.get(imageId);
     if (dataUri) {
       const img = document.createElement("img");
       img.className = "char-sprite";
@@ -347,6 +328,15 @@
       await startQuiz();
       return;
     }
+
+    // ルート選択のタイミングで、該当ルート専用の素材グループの取得を開始する。
+    // ゲーム進行をブロックしないよう await せず、取得はバックグラウンドで進める
+    // （取得完了前にその画像を使う行に到達した場合はプレースホルダー表示のまま）
+    const group = ROUTE_ASSET_GROUP[scriptId];
+    if (group) {
+      AssetCache.fetchGroup(group);
+    }
+
     await startScript(scriptId);
   }
 
@@ -394,9 +384,12 @@
     }
   });
 
-  function confirmPlayerNameAndStart() {
+  async function confirmPlayerNameAndStart() {
     const raw = el.inputPlayerName.value.trim();
     state.playthrough.playerName = raw.length > 0 ? raw : DEFAULT_PLAYER_NAME;
+    // タイトル画面〜名前入力の間に先行取得している可能性が高いが、
+    // 万一まだであればここで完了を待ってから導入シーンへ入る
+    await AssetCache.fetchGroup("common");
     startScript("common_intro");
   }
 
@@ -616,6 +609,9 @@
     playLinesThenEnd(lines, ending.title + "\n\nご協力ありがとうございました。");
   }
 
-  loadAssetImages();
+  (async () => {
+    await AssetCache.init(); // IndexedDBに前回までのキャッシュがあれば読み込む
+    AssetCache.fetchGroup("common"); // タイトル表示中〜名前入力中に先行取得（完了は待たない）
+  })();
   showScreen("title");
 })();
