@@ -140,6 +140,26 @@ window.AssetCache = (() => {
     });
   }
 
+  // GAS Web Appは、再デプロイ直後の反映待ちや実行環境のコールドスタートにより
+  // 断続的に404（HTMLのエラーページ）を返すことがある。1回だけ間隔を置いて
+  // 自動リトライすることで、こうした一時的な失敗をユーザーに見せないようにする。
+  const FETCH_RETRY_COUNT = 1;
+  const FETCH_RETRY_DELAY_MS = 1200;
+
+  function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function fetchGroupOnce(groupName) {
+    const apiUrl = window.ASSET_API_URL;
+    const url = apiUrl + (apiUrl.includes("?") ? "&" : "?") + "group=" + encodeURIComponent(groupName);
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+    return res.json();
+  }
+
   async function fetchGroup(groupName) {
     if (loadedGroups.has(groupName)) return; // 二重取得防止（IndexedDB由来の記録も含む）
     loadedGroups.add(groupName);
@@ -147,23 +167,32 @@ window.AssetCache = (() => {
     const apiUrl = window.ASSET_API_URL;
     if (!apiUrl) return; // 未設定ならプレースホルダー運用のまま
 
-    try {
-      const url = apiUrl + (apiUrl.includes("?") ? "&" : "?") + "group=" + encodeURIComponent(groupName);
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data && data.images) {
-        Object.assign(memoryCache, data.images);
-        saveManyToIndexedDb(data.images); // 完了を待たずゲームは先に進めてよい
+    let lastErr = null;
+    for (let attempt = 0; attempt <= FETCH_RETRY_COUNT; attempt++) {
+      if (attempt > 0) {
+        console.warn("[AssetCache] group=" + groupName + " retrying (" + attempt + "/" + FETCH_RETRY_COUNT + ")...");
+        await delay(FETCH_RETRY_DELAY_MS);
       }
-      if (data && data.errors && data.errors.length) {
-        console.warn("[AssetCache] group=" + groupName + " errors:", data.errors);
+      try {
+        const data = await fetchGroupOnce(groupName);
+        if (data && data.images) {
+          Object.assign(memoryCache, data.images);
+          saveManyToIndexedDb(data.images); // 完了を待たずゲームは先に進めてよい
+        }
+        if (data && data.errors && data.errors.length) {
+          console.warn("[AssetCache] group=" + groupName + " errors:", data.errors);
+        }
+        markGroupFetchedInIndexedDb(groupName); // 次回起動時に再取得しないよう記録
+        return; // 成功
+      } catch (err) {
+        lastErr = err;
       }
-      markGroupFetchedInIndexedDb(groupName); // 次回起動時に再取得しないよう記録
-    } catch (err) {
-      console.warn("[AssetCache] group=" + groupName + " fetch failed:", err);
-      loadedGroups.delete(groupName); // 失敗した場合は再試行できるようにしておく
-      clearGroupFromIndexedDb(groupName);
     }
+
+    // リトライしても失敗した場合：プレースホルダー運用にフォールバックする
+    console.warn("[AssetCache] group=" + groupName + " fetch failed after retry:", lastErr);
+    loadedGroups.delete(groupName); // 次にfetchGroupが呼ばれた際に再試行できるようにしておく
+    clearGroupFromIndexedDb(groupName);
   }
 
   function get(assetId) {
