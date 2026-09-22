@@ -31,6 +31,13 @@
       <p class="name-input-label">あなたの名前を教えてください</p>
       <input type="text" id="input-player-name" class="name-input-field" maxlength="12" placeholder="例：栗川　悠人" autocomplete="off">
       <p class="name-input-hint">未入力のまま進むと「＜主人公＞」と表記されます</p>
+
+      <p class="gender-select-label">主人公の見た目を選んでください</p>
+      <div class="gender-select" id="gender-select" role="radiogroup" aria-label="主人公の見た目">
+        <button type="button" class="gender-option active" id="btn-gender-m" data-gender="m" role="radio" aria-checked="true">男子生徒</button>
+        <button type="button" class="gender-option" id="btn-gender-f" data-gender="f" role="radio" aria-checked="false">女子生徒</button>
+      </div>
+
       <button id="btn-name-confirm" class="btn-primary">この名前で始める</button>
     </div>
   </section>
