@@ -1,69 +1,102 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
   <defs>
-    <radialGradient id="micGlow" cx="50%" cy="38%" r="55%">
+    <radialGradient id="micGlow" cx="50%" cy="35%" r="55%">
       <stop offset="0%" stop-color="#3a3448" stop-opacity="0.9"/>
       <stop offset="100%" stop-color="#14121a" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="metalBody" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#2a2733"/>
-      <stop offset="35%" stop-color="#514c60"/>
-      <stop offset="55%" stop-color="#6b6478"/>
-      <stop offset="75%" stop-color="#403c4d"/>
-      <stop offset="100%" stop-color="#1e1c26"/>
+
+    <!-- 円筒ボディの金属グラデーション（左からハイライト→影→ハイライト） -->
+    <linearGradient id="cylinderBody" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1c1a24"/>
+      <stop offset="18%" stop-color="#4a4558"/>
+      <stop offset="38%" stop-color="#7a7488"/>
+      <stop offset="50%" stop-color="#8f889c"/>
+      <stop offset="62%" stop-color="#6b6478"/>
+      <stop offset="82%" stop-color="#3a3648"/>
+      <stop offset="100%" stop-color="#16141c"/>
     </linearGradient>
-    <linearGradient id="meshBody" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#1c1a22"/>
-      <stop offset="30%" stop-color="#3d3a48"/>
-      <stop offset="50%" stop-color="#4c4858"/>
-      <stop offset="70%" stop-color="#302d38"/>
-      <stop offset="100%" stop-color="#141219"/>
+
+    <!-- メッシュヘッドの金属グラデーション -->
+    <linearGradient id="meshHead" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#141219"/>
+      <stop offset="20%" stop-color="#3a3644"/>
+      <stop offset="45%" stop-color="#575265"/>
+      <stop offset="55%" stop-color="#575265"/>
+      <stop offset="80%" stop-color="#2e2b38"/>
+      <stop offset="100%" stop-color="#0e0d13"/>
     </linearGradient>
+
     <linearGradient id="standGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#1a1820"/>
-      <stop offset="50%" stop-color="#3a3644"/>
-      <stop offset="100%" stop-color="#141219"/>
+      <stop offset="0%" stop-color="#141219"/>
+      <stop offset="45%" stop-color="#4a4558"/>
+      <stop offset="55%" stop-color="#4a4558"/>
+      <stop offset="100%" stop-color="#0e0d13"/>
     </linearGradient>
-    <pattern id="meshPattern" width="7" height="7" patternUnits="userSpaceOnUse">
-      <circle cx="3.5" cy="3.5" r="1.6" fill="none" stroke="#0a0910" stroke-width="0.8" opacity="0.65"/>
+
+    <radialGradient id="meshDot" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0910"/>
+      <stop offset="100%" stop-color="#0a0910" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="meshPattern" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="none"/>
+      <circle cx="4" cy="4" r="1.7" fill="#0a0910" opacity="0.55"/>
     </pattern>
+    <clipPath id="headClip">
+      <path d="M 148 122 Q 148 96 200 96 Q 252 96 252 122 L 252 205 Q 252 226 200 226 Q 148 226 148 205 Z"/>
+    </clipPath>
   </defs>
 
   <rect x="0" y="0" width="400" height="400" fill="#0e0c13"/>
-  <ellipse cx="200" cy="150" rx="160" ry="160" fill="url(#micGlow)"/>
+  <ellipse cx="200" cy="160" rx="170" ry="170" fill="url(#micGlow)"/>
 
-  <!-- スタンド -->
-  <path d="M 200 400 L 200 300" stroke="url(#standGrad)" stroke-width="14" stroke-linecap="round"/>
-  <ellipse cx="200" cy="398" rx="70" ry="10" fill="#0a0910" opacity="0.6"/>
-  <path d="M 130 395 Q 200 415 270 395 L 260 385 Q 200 400 140 385 Z" fill="url(#standGrad)"/>
+  <!-- 台座（デスクスタンド） -->
+  <ellipse cx="200" cy="360" rx="66" ry="12" fill="#0a0910" opacity="0.7"/>
+  <path d="M 148 358 Q 200 372 252 358 L 246 342 Q 200 356 154 342 Z" fill="url(#standGrad)"/>
+  <rect x="188" y="300" width="24" height="46" rx="4" fill="url(#standGrad)"/>
 
-  <!-- マイクホルダー -->
-  <path d="M 175 300 Q 175 275 200 275 Q 225 275 225 300" fill="none" stroke="#3a3644" stroke-width="10" stroke-linecap="round"/>
+  <!-- スタンドのアーム（マイクを支える金属バンド） -->
+  <path d="M 165 300 Q 165 268 200 266 Q 235 268 235 300" fill="none" stroke="url(#standGrad)" stroke-width="9" stroke-linecap="round"/>
+  <ellipse cx="200" cy="270" rx="14" ry="5" fill="#0a0910" opacity="0.5"/>
 
-  <!-- マイク本体：グリル（網状の球） -->
-  <ellipse cx="200" cy="200" rx="58" ry="72" fill="url(#meshBody)"/>
-  <ellipse cx="200" cy="200" rx="58" ry="72" fill="url(#meshPattern)" opacity="0.7"/>
-  <ellipse cx="200" cy="200" rx="58" ry="72" fill="none" stroke="#0a0910" stroke-width="2" opacity="0.6"/>
+  <!-- マイク本体：円筒形ボディ -->
+  <rect x="160" y="220" width="80" height="70" rx="10" fill="url(#cylinderBody)"/>
+  <rect x="160" y="220" width="80" height="70" rx="10" fill="none" stroke="#0a0910" stroke-width="1.5" opacity="0.6"/>
+  <!-- ボディの横リブ（segment lines） -->
+  <line x1="160" y1="238" x2="240" y2="238" stroke="#0a0910" stroke-width="1.2" opacity="0.5"/>
+  <line x1="160" y1="256" x2="240" y2="256" stroke="#0a0910" stroke-width="1.2" opacity="0.5"/>
+  <line x1="160" y1="274" x2="240" y2="274" stroke="#0a0910" stroke-width="1.2" opacity="0.5"/>
 
-  <!-- グリルのハイライト -->
-  <ellipse cx="182" cy="175" rx="16" ry="30" fill="#7a7488" opacity="0.35"/>
+  <!-- ロゴプレート（型番） -->
+  <rect x="176" y="244" width="48" height="14" rx="2" fill="#0e0d13" opacity="0.8"/>
+  <text x="200" y="254" font-family="monospace" font-size="7.5" fill="#9b93ac" text-anchor="middle" letter-spacing="0.5">MIC-7</text>
 
-  <!-- マイクの首元（金属パーツ） -->
-  <rect x="178" y="255" width="44" height="30" rx="6" fill="url(#metalBody)"/>
-  <line x1="178" y1="265" x2="222" y2="265" stroke="#1a1820" stroke-width="1.5" opacity="0.6"/>
-  <line x1="178" y1="275" x2="222" y2="275" stroke="#1a1820" stroke-width="1.5" opacity="0.6"/>
+  <!-- 首の絞り（ボディとヘッドの接続部） -->
+  <path d="M 168 220 Q 168 205 178 200 L 222 200 Q 232 205 232 220 Z" fill="url(#cylinderBody)"/>
 
-  <!-- ケーブル -->
-  <path d="M 200 285 Q 160 320 190 360 Q 220 395 170 400" fill="none" stroke="#141219" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
-
-  <!-- 埃・経年劣化の表現：小さな傷、くすみ -->
-  <g opacity="0.4">
-    <line x1="210" y1="180" x2="225" y2="195" stroke="#0a0910" stroke-width="1.5"/>
-    <line x1="185" y1="220" x2="195" y2="235" stroke="#0a0910" stroke-width="1"/>
-    <circle cx="215" cy="230" r="2" fill="#0a0910"/>
-    <circle cx="190" cy="190" r="1.5" fill="#0a0910"/>
+  <!-- マイクヘッド：メッシュの半球〜円筒（グリルボール） -->
+  <path d="M 148 122 Q 148 96 200 96 Q 252 96 252 122 L 252 205 Q 252 226 200 226 Q 148 226 148 205 Z"
+        fill="url(#meshHead)" stroke="#0a0910" stroke-width="2"/>
+  <g clip-path="url(#headClip)">
+    <rect x="140" y="90" width="120" height="145" fill="url(#meshPattern)" opacity="0.85"/>
+    <!-- ハイライト（左上に丸い光沢） -->
+    <ellipse cx="178" cy="130" rx="18" ry="34" fill="#c8c2d8" opacity="0.25"/>
+    <ellipse cx="222" cy="180" rx="14" ry="22" fill="#0a0910" opacity="0.25"/>
   </g>
 
-  <!-- 台座のプレート（型番等が刻まれているイメージ） -->
-  <rect x="160" y="340" width="80" height="18" rx="3" fill="#1a1820" opacity="0.7"/>
-  <text x="200" y="353" font-family="monospace" font-size="9" fill="#6b6478" text-anchor="middle" letter-spacing="1">BROADCAST MIC-7</text>
+  <!-- ヘッドの上部・下部の金属リング -->
+  <ellipse cx="200" cy="122" rx="52" ry="10" fill="none" stroke="#8f889c" stroke-width="2.5" opacity="0.7"/>
+  <ellipse cx="200" cy="205" rx="52" ry="10" fill="none" stroke="#3a3648" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- 先端の小さな飾りキャップ -->
+  <ellipse cx="200" cy="98" rx="10" ry="5" fill="#7a7488" opacity="0.8"/>
+
+  <!-- ケーブル -->
+  <path d="M 200 290 Q 155 320 185 350 Q 215 375 165 392" fill="none" stroke="#141219" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- 経年劣化：くすみ・小傷 -->
+  <g opacity="0.35">
+    <line x1="222" y1="150" x2="234" y2="165" stroke="#0a0910" stroke-width="1.4"/>
+    <line x1="168" y1="240" x2="178" y2="250" stroke="#0a0910" stroke-width="1"/>
+    <circle cx="230" cy="270" r="1.8" fill="#0a0910"/>
+  </g>
 </svg>
