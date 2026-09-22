@@ -140,6 +140,40 @@ html, body {
   margin: 0.9rem 0 2rem 0;
 }
 
+.gender-select-label {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--color-narration);
+  margin: 0 0 0.8rem 0;
+}
+.gender-select {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+}
+.gender-option {
+  flex: 1;
+  padding: 0.7em 0.5em;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-accent-soft);
+  border-radius: 8px;
+  color: var(--color-narration);
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.92rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.gender-option:hover {
+  border-color: var(--color-accent);
+}
+.gender-option.active {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
 /* ---------- 素材ロード中の待機画面 ---------- */
 #screen-loading {
   align-items: center;
@@ -224,26 +258,59 @@ html, body {
   z-index: 1;
   pointer-events: none;
 }
+
+/* 立ち絵を映す「窓」。中身（img）をscaleで拡大し、はみ出た分をここで
+   クロップすることで、頭〜胸あたりだけを画面いっぱいに映すバストアップ構図にする。
+   下端はフェードさせず、テキストボックスの裏にそのまま沈める。 */
+.char-frame {
+  width: min(42vw, 400px);
+  height: 82vh;
+  max-height: 760px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  /* 全身画像の胸〜腰あたりが窓の下端に来るよう、窓自体を少し沈める */
+  margin-bottom: -6vh;
+}
+.char-frame[data-shot="close"] {
+  width: min(48vw, 460px);
+  height: 90vh;
+  max-height: 840px;
+  margin-bottom: -4vh;
+}
+
 .char-sprite {
-  height: 65vh;
-  max-height: 620px;
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+  /* 素材は元解像度が低い（実測 目安124x341px程度）ため、幅全体を
+     大きく引き伸ばすとぼやけが目立つ。控えめな拡大率で頭部を
+     基準に配置し、親の.char-frameでクロップしてバストアップに見せる。 */
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 190px;
+  height: auto;
+  transform: translateX(-50%) scale(1.35);
+  transform-origin: top center;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,0.5));
+  transition: transform 0.3s ease;
+}
+.char-frame[data-shot="close"] .char-sprite {
+  transform: translateX(-50%) scale(1.7);
 }
 
 /* キャラ不在時のダミー表示（色付きシルエット） */
 .char-placeholder {
-  width: 220px;
-  height: 60vh;
-  max-height: 560px;
-  border-radius: 110px 110px 0 0;
+  width: 100%;
+  height: 140%;
+  border-radius: 40px 40px 0 0;
   opacity: 0.85;
   position: absolute;
-  bottom: 0;
-  z-index: 1;
+  top: 0;
+  left: 0;
 }
 .char-placeholder.marico { background: linear-gradient(180deg, var(--color-marico), transparent 120%); }
 .char-placeholder.niko { background: linear-gradient(180deg, var(--color-niko), transparent 120%); }
 .char-placeholder.nina { background: linear-gradient(180deg, var(--color-nina), transparent 120%); }
+.char-placeholder.mc { background: linear-gradient(180deg, #cfa96e, transparent 120%); }
 
 .textbox {
   position: relative;
@@ -534,6 +601,8 @@ html, body {
 @media (max-width: 600px) {
   .textbox { padding: 1.2rem 1.3rem; min-height: 140px; }
   .line-text { font-size: 1rem; }
-  .char-sprite, .char-placeholder { height: 45vh; }
+  /* 縦長画面では横幅の余裕がないため、窓の幅を画面幅基準に広げる */
+  .char-frame { width: min(74vw, 420px); height: 58vh; max-height: 520px; }
+  .char-frame[data-shot="close"] { width: min(84vw, 460px); height: 64vh; max-height: 560px; }
   .quiz-cards { grid-template-columns: 1fr; }
 }

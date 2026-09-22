@@ -31,6 +31,8 @@
     btnStart: document.getElementById("btn-start"),
     inputPlayerName: document.getElementById("input-player-name"),
     btnNameConfirm: document.getElementById("btn-name-confirm"),
+    btnGenderM: document.getElementById("btn-gender-m"),
+    btnGenderF: document.getElementById("btn-gender-f"),
     btnBackTitle: document.getElementById("btn-back-title"),
     btnRestart: document.getElementById("btn-restart"),
     novelScreen: document.getElementById("screen-novel"),
@@ -78,7 +80,8 @@
       bond: null,
       quiz1Correct: null,
       quiz2Correct: null,
-      playerName: null
+      playerName: null,
+      playerGender: "m" // "m" | "f"。名前入力画面の性別選択で変更される
     }
   };
 
@@ -91,14 +94,39 @@
     timelineRemaining: []
   };
 
-  const CHAR_CLASS = { "マリコ": "marico", "ニコ": "niko", "ニナ": "nina" };
+  const CHAR_CLASS = { "マリコ": "marico", "ニコ": "niko", "ニナ": "nina", "主人公": "mc" };
 
-  // 話者名 -> 素材APIの画像ID（基本表情のみ。表情差分は別途対応）
+  // 話者名 -> 素材APIの画像ID（基本表情）
   const CHAR_IMAGE_ID = {
     "マリコ": "marico_normal",
     "ニコ": "niko_normal",
     "ニナ": "nina_normal"
+    // "主人公" は性別によって画像が変わるため getCharImageId() で解決する
   };
+
+  // ルートが緊迫する場面（scriptId + 行インデックスの下限）では、
+  // 通常表情ではなく緊張・動揺した表情差分に切り替える。
+  // 各シナリオ（scenario/*.md, data/script_*.json）を実際に読み、
+  // 雰囲気が変わる行を基準に設定している：
+  //   マリコ（全42行）: 19行目「マリコの声色が、急に変わった」から動揺が始まる
+  //   ニコ（全40行）  : 17行目「ニコ先輩の声が、珍しく硬くなる」から真剣な空気になる
+  //   ニナ（全43行）  : 12行目「これ」「先輩の声が震えていた」から動揺が始まる
+  const CHAR_TENSE_IMAGE_ID = {
+    "マリコ": "marico_scared",
+    "ニコ": "niko_serious",
+    "ニナ": "nina_fading"
+  };
+  const TENSE_SCENE_START_INDEX = {
+    route_marico: 19,
+    route_niko: 17,
+    route_nina: 12
+  };
+
+  // 主人公専用の緊張時表情（性別ごと）
+  const MC_TENSE_IMAGE_ID = { m: "mc_serious_m", f: "mc_serious_f" };
+
+  // このシーン（背景）に切り替わったら、通常より寄ったクローズアップ演出にする
+  const CLOSEUP_BACKGROUNDS = new Set(["mirror"]);
 
   // 背景キー -> 素材APIの画像ID
   const BG_IMAGE_ID = {
@@ -166,25 +194,51 @@
       el.bgLayer.style.backgroundImage = "";
       el.bgLayer.setAttribute("data-bg", bg);
     }
+    return bg;
   }
 
-  function setCharacterPlaceholder(speaker) {
+  // 話者名 -> 表示すべき素材ID を解決する（主人公は性別で、
+  // 各キャラは物語が緊迫する場面かどうかで出し分ける）
+  function resolveCharImageId(speaker, scriptId, lineIndex) {
+    const tenseStart = TENSE_SCENE_START_INDEX[scriptId];
+    const isTenseScene = typeof tenseStart === "number" && lineIndex >= tenseStart;
+
+    if (speaker === "主人公") {
+      const gender = state.playthrough.playerGender === "f" ? "f" : "m";
+      return isTenseScene ? MC_TENSE_IMAGE_ID[gender] : ("mc_normal_" + gender);
+    }
+    if (isTenseScene && CHAR_TENSE_IMAGE_ID[speaker]) {
+      return CHAR_TENSE_IMAGE_ID[speaker];
+    }
+    return CHAR_IMAGE_ID[speaker];
+  }
+
+  function setCharacterPlaceholder(speaker, scriptId, lineIndex, bg) {
     el.charLayer.innerHTML = "";
     if (!speaker || !CHAR_CLASS[speaker]) return;
 
-    const imageId = CHAR_IMAGE_ID[speaker];
+    const isCloseup = CLOSEUP_BACKGROUNDS.has(bg);
+
+    // .char-frame は立ち絵を映す「窓」。中の画像をscaleで拡大し、
+    // はみ出た部分をoverflow: hiddenでクロップしてバストアップ構図にする。
+    const frame = document.createElement("div");
+    frame.className = "char-frame";
+    if (isCloseup) frame.setAttribute("data-shot", "close");
+
+    const imageId = resolveCharImageId(speaker, scriptId, lineIndex);
     const dataUri = imageId && AssetCache.get(imageId);
     if (dataUri) {
       const img = document.createElement("img");
       img.className = "char-sprite";
       img.src = dataUri;
       img.alt = speaker;
-      el.charLayer.appendChild(img);
+      frame.appendChild(img);
     } else {
       const div = document.createElement("div");
       div.className = "char-placeholder " + CHAR_CLASS[speaker];
-      el.charLayer.appendChild(div);
+      frame.appendChild(div);
     }
+    el.charLayer.appendChild(frame);
   }
 
   function typeLine(text) {
@@ -283,8 +337,8 @@
       return;
     }
 
-    setBackground(state.currentScriptId, state.index);
-    setCharacterPlaceholder(line.speaker);
+    const bg = setBackground(state.currentScriptId, state.index);
+    setCharacterPlaceholder(line.speaker, state.currentScriptId, state.index, bg);
 
     if (line.speaker) {
       el.speakerName.textContent = line.speaker === "放送" ? "？？？（放送）" : line.speaker;
@@ -396,6 +450,17 @@
   el.btnNameConfirm.addEventListener("click", () => {
     confirmPlayerNameAndStart();
   });
+
+  function selectGender(gender) {
+    state.playthrough.playerGender = gender;
+    const isM = gender === "m";
+    el.btnGenderM.classList.toggle("active", isM);
+    el.btnGenderM.setAttribute("aria-checked", String(isM));
+    el.btnGenderF.classList.toggle("active", !isM);
+    el.btnGenderF.setAttribute("aria-checked", String(!isM));
+  }
+  el.btnGenderM.addEventListener("click", () => selectGender("m"));
+  el.btnGenderF.addEventListener("click", () => selectGender("f"));
 
   el.inputPlayerName.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {

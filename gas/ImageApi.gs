@@ -75,8 +75,8 @@ var ASSET_GROUPS = {
   // --- route_marico: マリコルート選択後に必要 ---
   "marico_scared": ["route_marico"],
   "broadcast_room": ["route_marico"],
-  "mc_serious_m": ["route_marico", "route_niko"],
-  "mc_serious_f": ["route_marico", "route_niko"],
+  "mc_serious_m": ["route_marico", "route_niko", "route_nina"],
+  "mc_serious_f": ["route_marico", "route_niko", "route_nina"],
 
   // --- route_niko: ニコルート選択後に必要 ---
   "niko_serious": ["route_niko"],
