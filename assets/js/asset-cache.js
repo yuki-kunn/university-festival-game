@@ -141,13 +141,26 @@ window.AssetCache = (() => {
   }
 
   // GAS Web Appは、再デプロイ直後の反映待ちや実行環境のコールドスタートにより
-  // 断続的に404（HTMLのエラーページ）を返すことがある。1回だけ間隔を置いて
-  // 自動リトライすることで、こうした一時的な失敗をユーザーに見せないようにする。
-  const FETCH_RETRY_COUNT = 1;
-  const FETCH_RETRY_DELAY_MS = 1200;
+  // 断続的に404（HTMLのエラーページ）を返すことがある。実測ではコールドスタート
+  // 自体に最大50秒程度かかることがあり（2回目以降は3〜5秒で安定）、それに対応
+  // できるだけの回数・間隔でリトライすることで、一時的な失敗をユーザーに
+  // 見せないようにする。
+  const FETCH_RETRY_COUNT = 4;
+  const FETCH_RETRY_DELAY_MS = 3000;
 
   function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // ページ読み込み直後、結果を待たずに投げておく「ウォームアップ」リクエスト。
+  // これによりGASの実行環境をできるだけ早く起こし始め、実際に
+  // fetchGroup("common") が呼ばれる頃には温まっている可能性を上げる。
+  // レスポンスの成否は問わない（失敗しても後続のfetchGroupが正式にリトライする）。
+  function warmUp() {
+    const apiUrl = window.ASSET_API_URL;
+    if (!apiUrl) return;
+    const url = apiUrl + (apiUrl.includes("?") ? "&" : "?") + "group=__warmup__";
+    fetch(url).catch(() => {});
   }
 
   async function fetchGroupOnce(groupName) {
@@ -200,6 +213,7 @@ window.AssetCache = (() => {
   }
 
   async function init() {
+    warmUp(); // GASの実行環境を早めに起こし始める（結果は待たない）
     await loadAllFromIndexedDb();
   }
 
