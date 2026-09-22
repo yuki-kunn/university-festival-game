@@ -91,6 +91,48 @@
 
   const CHAR_CLASS = { "マリコ": "marico", "ニコ": "niko", "ニナ": "nina" };
 
+  // 話者名 -> 素材APIの画像ID（基本表情のみ。表情差分は別途対応）
+  const CHAR_IMAGE_ID = {
+    "マリコ": "marico_normal",
+    "ニコ": "niko_normal",
+    "ニナ": "nina_normal"
+  };
+
+  // 背景キー -> 素材APIの画像ID
+  const BG_IMAGE_ID = {
+    clubroom: "clubroom_day",
+    corridor: "corridor",
+    broadcast: "broadcast_room",
+    library: "library",
+    mirror: "mirror_closeup"
+  };
+
+  // GAS APIから取得した画像マップ（素材ID -> Data URI）。未取得時は空のまま
+  let assetImages = {};
+  let assetApiLoaded = false;
+
+  async function loadAssetImages() {
+    const apiUrl = window.ASSET_API_URL;
+    if (!apiUrl) {
+      assetApiLoaded = true;
+      return;
+    }
+    try {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      if (data && data.images) {
+        assetImages = data.images;
+      }
+      if (data && data.errors && data.errors.length) {
+        console.warn("asset API errors:", data.errors);
+      }
+    } catch (err) {
+      console.warn("asset API fetch failed, falling back to placeholders:", err);
+    } finally {
+      assetApiLoaded = true;
+    }
+  }
+
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
     el.screens[name].classList.add("active");
@@ -111,12 +153,33 @@
     if (scriptId === "route_marico") bg = "broadcast";
     if (scriptId === "route_niko") bg = "library";
     if (scriptId === "route_nina") bg = "mirror";
-    el.bgLayer.setAttribute("data-bg", bg);
+
+    const imageId = BG_IMAGE_ID[bg];
+    const dataUri = imageId && assetImages[imageId];
+    if (dataUri) {
+      el.bgLayer.style.backgroundImage = "url('" + dataUri + "')";
+      el.bgLayer.style.backgroundSize = "cover";
+      el.bgLayer.style.backgroundPosition = "center";
+      el.bgLayer.removeAttribute("data-bg");
+    } else {
+      el.bgLayer.style.backgroundImage = "";
+      el.bgLayer.setAttribute("data-bg", bg);
+    }
   }
 
   function setCharacterPlaceholder(speaker) {
     el.charLayer.innerHTML = "";
-    if (speaker && CHAR_CLASS[speaker]) {
+    if (!speaker || !CHAR_CLASS[speaker]) return;
+
+    const imageId = CHAR_IMAGE_ID[speaker];
+    const dataUri = imageId && assetImages[imageId];
+    if (dataUri) {
+      const img = document.createElement("img");
+      img.className = "char-sprite";
+      img.src = dataUri;
+      img.alt = speaker;
+      el.charLayer.appendChild(img);
+    } else {
       const div = document.createElement("div");
       div.className = "char-placeholder " + CHAR_CLASS[speaker];
       el.charLayer.appendChild(div);
@@ -553,5 +616,6 @@
     playLinesThenEnd(lines, ending.title + "\n\nご協力ありがとうございました。");
   }
 
+  loadAssetImages();
   showScreen("title");
 })();
