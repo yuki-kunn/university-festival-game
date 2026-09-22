@@ -21,11 +21,13 @@
     screens: {
       title: document.getElementById("screen-title"),
       nameInput: document.getElementById("screen-name-input"),
+      loading: document.getElementById("screen-loading"),
       novel: document.getElementById("screen-novel"),
       notyet: document.getElementById("screen-notyet"),
       end: document.getElementById("screen-end"),
       quiz: document.getElementById("screen-quiz")
     },
+    loadingText: document.getElementById("loading-text"),
     btnStart: document.getElementById("btn-start"),
     inputPlayerName: document.getElementById("input-player-name"),
     btnNameConfirm: document.getElementById("btn-name-confirm"),
@@ -117,6 +119,24 @@
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
     el.screens[name].classList.add("active");
+  }
+
+  // 素材グループの取得を待つ間、ローディング画面を表示する。
+  // すでにキャッシュ済みで取得が一瞬（LOADING_SCREEN_DELAY_MS未満）で終わる場合は、
+  // ローディング画面を一切表示せずそのまま進める（不要なちらつきを防ぐ）。
+  const LOADING_SCREEN_DELAY_MS = 250;
+
+  async function withLoadingScreen(promise, message) {
+    let finished = false;
+    promise.then(() => { finished = true; });
+
+    await new Promise((resolve) => setTimeout(resolve, LOADING_SCREEN_DELAY_MS));
+
+    if (!finished) {
+      el.loadingText.textContent = message;
+      showScreen("loading");
+      await promise;
+    }
   }
 
   async function loadScript(id) {
@@ -329,12 +349,11 @@
       return;
     }
 
-    // ルート選択のタイミングで、該当ルート専用の素材グループの取得を開始する。
-    // ゲーム進行をブロックしないよう await せず、取得はバックグラウンドで進める
-    // （取得完了前にその画像を使う行に到達した場合はプレースホルダー表示のまま）
+    // ルート選択のタイミングで、該当ルート専用の素材グループの取得を待つ。
+    // 取得が一瞬で終わる場合（キャッシュ済み等）はローディング画面を出さない。
     const group = ROUTE_ASSET_GROUP[scriptId];
     if (group) {
-      AssetCache.fetchGroup(group);
+      await withLoadingScreen(AssetCache.fetchGroup(group), "調査の準備をしています…");
     }
 
     await startScript(scriptId);
@@ -388,8 +407,8 @@
     const raw = el.inputPlayerName.value.trim();
     state.playthrough.playerName = raw.length > 0 ? raw : DEFAULT_PLAYER_NAME;
     // タイトル画面〜名前入力の間に先行取得している可能性が高いが、
-    // 万一まだであればここで完了を待ってから導入シーンへ入る
-    await AssetCache.fetchGroup("common");
+    // 万一まだであればローディング画面を出して完了を待ってから導入シーンへ入る
+    await withLoadingScreen(AssetCache.fetchGroup("common"), "物語の準備をしています…");
     startScript("common_intro");
   }
 
