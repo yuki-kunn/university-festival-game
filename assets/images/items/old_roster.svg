@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="rosterGlow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#2e2a3a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#14121a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pageGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8ddc4"/>
+      <stop offset="100%" stop-color="#d0c2a0"/>
+    </linearGradient>
+    <linearGradient name="fadeOutName" id="fadeName" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2a2318" stop-opacity="1"/>
+      <stop offset="65%" stop-color="#2a2318" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#2a2318" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="fadeMask">
+      <rect x="0" y="0" width="400" height="400" fill="url(#fadeName)"/>
+    </mask>
+  </defs>
+
+  <rect x="0" y="0" width="400" height="400" fill="#0e0c13"/>
+  <ellipse cx="200" cy="190" rx="180" ry="150" fill="url(#rosterGlow)"/>
+
+  <!-- 冊子の裏表紙（下に少し覗く） -->
+  <rect x="66" y="66" width="266" height="270" rx="3" fill="#4a3f30"/>
+
+  <!-- 開いたページ -->
+  <g transform="rotate(1.5 200 200)">
+    <rect x="70" y="68" width="258" height="264" rx="3" fill="url(#pageGrad)"/>
+    <rect x="70" y="68" width="258" height="264" rx="3" fill="none" stroke="#9c8c68" stroke-width="1.2"/>
+
+    <!-- 中央の綴じ線 -->
+    <line x1="199" y1="70" x2="199" y2="330" stroke="#8a7a58" stroke-width="1" opacity="0.5"/>
+
+    <!-- シミ -->
+    <ellipse cx="290" cy="300" rx="26" ry="18" fill="#b8a878" opacity="0.22"/>
+    <ellipse cx="100" cy="90" rx="16" ry="10" fill="#a89868" opacity="0.2"/>
+
+    <!-- タイトル -->
+    <text x="200" y="96" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="16" fill="#3a3226" text-anchor="middle" letter-spacing="3">オカルト研究部　部員名簿</text>
+    <line x1="90" y1="106" x2="310" y2="106" stroke="#8a7a58" stroke-width="1"/>
+
+    <!-- 名簿の項目：学年ごと -->
+    <g font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="12.5" fill="#2a2318">
+      <text x="90" y="130" font-size="11" fill="#6a5f48">◆三年　部長</text>
+      <text x="105" y="150">烏風　螺</text>
+
+      <text x="90" y="178" font-size="11" fill="#6a5f48">◆二年</text>
+      <text x="105" y="198">金姫　笑虎</text>
+
+      <text x="90" y="226" font-size="11" fill="#6a5f48">◆一年</text>
+      <text x="105" y="246">宝部　真理子</text>
+      <text x="105" y="266" id="player-name-text" data-default="＜主人公＞">＜主人公＞</text>
+    </g>
+
+    <!-- 右ページ：古い代の記録。1名だけ名前が消えかけている（Bの示唆） -->
+    <g font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="11" fill="#4a4030">
+      <text x="215" y="130" font-size="10" fill="#6a5f48">◆十年前・当時の部員</text>
+      <text x="220" y="150">三年　（部長）　――――</text>
+      <text x="220" y="170">二年　◯◯　◯◯</text>
+      <g mask="url(#fadeMask)">
+        <text x="220" y="190">二年　◯◯　◯◯</text>
+      </g>
+      <text x="220" y="210">一年　◯◯　◯◯</text>
+      <text x="220" y="230">一年　◯◯　◯◯</text>
+    </g>
+
+    <!-- 「以降、記録なし」の走り書き風注記 -->
+    <text x="220" y="260" font-family="sans-serif" font-size="9" fill="#8a5040" font-style="italic">※当該年度、以降の記録に空白あり</text>
+
+    <!-- 折れ・破れの表現 -->
+    <path d="M 320 320 L 330 330 L 328 335 L 315 328 Z" fill="#4a3f30" opacity="0.5"/>
+  </g>
+</svg>
