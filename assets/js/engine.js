@@ -33,6 +33,7 @@
     btnNameConfirm: document.getElementById("btn-name-confirm"),
     btnGenderM: document.getElementById("btn-gender-m"),
     btnGenderF: document.getElementById("btn-gender-f"),
+    btnMuteToggle: document.getElementById("btn-mute-toggle"),
     btnBackTitle: document.getElementById("btn-back-title"),
     btnRestart: document.getElementById("btn-restart"),
     novelScreen: document.getElementById("screen-novel"),
@@ -144,6 +145,67 @@
     route_nina: "route_nina"
   };
 
+  // ---- BGM/SE切り替えのタイミング定義 ----
+  // data/script_common.json を実際に読み、雰囲気が変わる行を基準に設定：
+  //   0-22行目: 平穏な日常パート → bgm_daily
+  //   23行目  : 「部活動の終了を告げるチャイムが鳴った」→ se_chime
+  //   27行目  : 「ザザ、という耳障りなノイズ」無人放送の発生 → se_broadcast_noise、以降 bgm_mystery
+  const COMMON_INTRO_CHIME_INDEX = 23;
+  const COMMON_INTRO_BROADCAST_INDEX = 27;
+
+  // 各ルートの緊迫シーン開始行は、表情差分の切り替えと同じタイミング
+  // （TENSE_SCENE_START_INDEX）で bgm_climax + se_cold_wind に切り替える。
+
+  // クイズ正答数・絆に応じたエンディングキー -> BGMキー
+  // （"merry_bad" は専用BGM素材がないため bad_end を流用する）
+  const ENDING_BGM_KEY = {
+    true: "true_end",
+    merry_bad: "bad_end",
+    bad: "bad_end"
+  };
+
+  let lastBgmSceneKey = null; // シーンBGM切り替えの重複呼び出しを防ぐ
+
+  // シナリオの進行（scriptId + 行インデックス）に応じて、BGM/SEを更新する。
+  // renderLineから毎行呼ばれるが、同じシーンキーの間は何もしない。
+  function updateSceneAudio(scriptId, lineIndex) {
+    let sceneKey = null;
+    let bgmKey = null;
+
+    if (scriptId === "common_intro") {
+      if (lineIndex === COMMON_INTRO_CHIME_INDEX) {
+        AudioManager.playSe("chime");
+      }
+      if (lineIndex === COMMON_INTRO_BROADCAST_INDEX) {
+        AudioManager.playSe("broadcast_noise");
+      }
+      if (lineIndex < COMMON_INTRO_BROADCAST_INDEX) {
+        sceneKey = "common_daily";
+        bgmKey = "daily";
+      } else {
+        sceneKey = "common_mystery";
+        bgmKey = "mystery";
+      }
+    } else if (TENSE_SCENE_START_INDEX[scriptId] !== undefined) {
+      const tenseStart = TENSE_SCENE_START_INDEX[scriptId];
+      if (lineIndex < tenseStart) {
+        sceneKey = scriptId + "_tension";
+        bgmKey = "tension";
+      } else {
+        sceneKey = scriptId + "_climax";
+        bgmKey = "climax";
+        if (lineIndex === tenseStart) {
+          AudioManager.playSe("cold_wind");
+        }
+      }
+    }
+
+    if (sceneKey && sceneKey !== lastBgmSceneKey) {
+      lastBgmSceneKey = sceneKey;
+      if (bgmKey) AudioManager.playBgm(bgmKey);
+    }
+  }
+
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
     el.screens[name].classList.add("active");
@@ -184,9 +246,9 @@
     if (scriptId === "route_nina") bg = "mirror";
 
     const imageId = BG_IMAGE_ID[bg];
-    const dataUri = imageId && AssetCache.get(imageId);
-    if (dataUri) {
-      el.bgLayer.style.backgroundImage = "url('" + dataUri + "')";
+    const assetUrl = imageId && AssetCache.get(imageId);
+    if (assetUrl) {
+      el.bgLayer.style.backgroundImage = "url('" + assetUrl + "')";
       el.bgLayer.style.backgroundSize = "cover";
       el.bgLayer.style.backgroundPosition = "center";
       el.bgLayer.removeAttribute("data-bg");
@@ -226,11 +288,11 @@
     if (isCloseup) frame.setAttribute("data-shot", "close");
 
     const imageId = resolveCharImageId(speaker, scriptId, lineIndex);
-    const dataUri = imageId && AssetCache.get(imageId);
-    if (dataUri) {
+    const assetUrl = imageId && AssetCache.get(imageId);
+    if (assetUrl) {
       const img = document.createElement("img");
       img.className = "char-sprite";
-      img.src = dataUri;
+      img.src = assetUrl;
       img.alt = speaker;
       frame.appendChild(img);
     } else {
@@ -339,6 +401,7 @@
 
     const bg = setBackground(state.currentScriptId, state.index);
     setCharacterPlaceholder(line.speaker, state.currentScriptId, state.index, bg);
+    updateSceneAudio(state.currentScriptId, state.index);
 
     if (line.speaker) {
       el.speakerName.textContent = line.speaker === "放送" ? "？？？（放送）" : line.speaker;
@@ -354,6 +417,7 @@
 
   function advance() {
     if (!el.itemViewer.hidden) return;
+    AudioManager.playSe("click");
     if (state.isTyping) {
       skipTyping();
       return;
@@ -461,6 +525,14 @@
   }
   el.btnGenderM.addEventListener("click", () => selectGender("m"));
   el.btnGenderF.addEventListener("click", () => selectGender("f"));
+
+  el.btnMuteToggle.addEventListener("click", (e) => {
+    e.stopPropagation(); // ノベル画面クリックでのテキスト送りに巻き込まれないようにする
+    const nextMuted = !AudioManager.isMuted();
+    AudioManager.setMuted(nextMuted);
+    el.btnMuteToggle.textContent = nextMuted ? "🔇" : "🔊";
+    el.btnMuteToggle.setAttribute("aria-pressed", String(nextMuted));
+  });
 
   el.inputPlayerName.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -689,8 +761,17 @@
       return;
     }
 
+    lastBgmSceneKey = "ending_" + endingKey;
+    AudioManager.playBgm(ENDING_BGM_KEY[endingKey] || "bad_end");
+
     const lines = [{ speaker: null, text: "――" + ending.title + "――" }, ...ending.lines];
     playLinesThenEnd(lines, ending.title + "\n\nご協力ありがとうございました。");
+  }
+
+  // ミュートボタンの見た目を、前回訪問時の設定（localStorage）と同期させる
+  if (AudioManager.isMuted()) {
+    el.btnMuteToggle.textContent = "🔇";
+    el.btnMuteToggle.setAttribute("aria-pressed", "true");
   }
 
   (async () => {
