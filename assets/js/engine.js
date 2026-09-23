@@ -579,6 +579,10 @@
   });
 
   el.btnRestart.addEventListener("click", () => {
+    // 2周目のプレイで同じルートに入った際も正しくBGMが切り替わるよう、
+    // 前回のプレイスルーで記録したシーンキーをリセットしておく
+    lastBgmSceneKey = null;
+    AudioManager.stopBgm();
     showScreen("title");
   });
 
@@ -604,6 +608,9 @@
     await loadQuizData();
     state.playthrough.quiz1Correct = null;
     state.playthrough.quiz2Correct = null;
+    // 直前のルートで鳴っていたBGM（tension/climax）を止め、
+    // 推理に集中できる静けさの中でクイズを進める
+    AudioManager.stopBgm();
     showScreen("quiz");
     showQuizIntro();
   }
