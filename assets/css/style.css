@@ -441,6 +441,12 @@ html, body {
   height: 100%;
   display: block;
 }
+.item-viewer-image img.item-photo {
+  /* 集合写真は正方形フレームより横長の可能性が高いため、
+     歪ませず中央をトリミングして収める */
+  object-fit: cover;
+  object-position: center;
+}
 .choice-btn:hover {
   background: var(--color-accent-soft);
   border-color: var(--color-accent);

@@ -107,10 +107,11 @@
 
   // ルートが緊迫する場面（scriptId + 行インデックスの下限）では、
   // 通常表情ではなく緊張・動揺した表情差分に切り替える。
-  // 各シナリオ（scenario/*.md, data/script_*.json）を実際に読み、
-  // 雰囲気が変わる行を基準に設定している：
-  //   マリコ（全42行）: 19行目「マリコの声色が、急に変わった」から動揺が始まる
-  //   ニコ（全40行）  : 17行目「ニコ先輩の声が、珍しく硬くなる」から真剣な空気になる
+  // 各シナリオ（data/script_*.json）を実際に読み、雰囲気が変わる行を
+  // 基準に設定している（小道具のitem行挿入により行番号がずれるため、
+  // 素材を追加した際はここも合わせて確認・更新すること）：
+  //   マリコ（全43行）: 21行目「マリコの声色が、急に変わった」から動揺が始まる
+  //   ニコ（全41行）  : 18行目「ニコ先輩の声が、珍しく硬くなる」から真剣な空気になる
   //   ニナ（全43行）  : 12行目「これ」「先輩の声が震えていた」から動揺が始まる
   const CHAR_TENSE_IMAGE_ID = {
     "マリコ": "marico_scared",
@@ -118,8 +119,8 @@
     "ニナ": "nina_fading"
   };
   const TENSE_SCENE_START_INDEX = {
-    route_marico: 19,
-    route_niko: 17,
+    route_marico: 21,
+    route_niko: 18,
     route_nina: 12
   };
 
@@ -327,21 +328,42 @@
   const ITEM_IMAGE_SOURCES = {
     old_roster: "assets/images/items/old_roster.svg",
     library_card: "assets/images/items/library_card.svg",
-    broadcast_mic: "assets/images/items/broadcast_mic.svg",
-    group_photo: "assets/images/items/group_photo.svg"
+    broadcast_mic: "assets/images/items/broadcast_mic.svg"
   };
   const itemSvgCache = {};
+
+  // group_photo は主人公が写り込んでいる集合写真のため、性別選択に応じて
+  // 見た目（group_photo_m / group_photo_f）が変わる。他の小道具と違い
+  // SVGイラストではなく実写風の画像（R2から配信）なので、
+  // AssetCache.get()でURLを取得して<img>として表示する。
+  function groupPhotoImageId() {
+    return state.playthrough.playerGender === "f" ? "group_photo_f" : "group_photo_m";
+  }
 
   async function showItemViewer(itemId, caption) {
     el.itemViewerCaption.textContent = caption;
     el.itemViewerImage.innerHTML = "";
 
-    const src = ITEM_IMAGE_SOURCES[itemId];
-    if (src) {
-      const svgMarkup = await loadItemSvg(itemId, src);
-      el.itemViewerImage.innerHTML = svgMarkup;
-      if (itemId === "old_roster") {
-        applyPlayerNameToRoster();
+    if (itemId === "group_photo") {
+      // バックグラウンド先読みがまだ終わっていない場合の保険として、
+      // ここで一度だけ完了を待つ（既に完了していれば即resolve）
+      await AssetCache.fetchGroup("extras");
+      const url = AssetCache.get(groupPhotoImageId());
+      if (url) {
+        const img = document.createElement("img");
+        img.className = "item-photo";
+        img.src = url;
+        img.alt = caption;
+        el.itemViewerImage.appendChild(img);
+      }
+    } else {
+      const src = ITEM_IMAGE_SOURCES[itemId];
+      if (src) {
+        const svgMarkup = await loadItemSvg(itemId, src);
+        el.itemViewerImage.innerHTML = svgMarkup;
+        if (itemId === "old_roster") {
+          applyPlayerNameToRoster();
+        }
       }
     }
 
@@ -546,6 +568,9 @@
     // タイトル画面〜名前入力の間に先行取得している可能性が高いが、
     // 万一まだであればローディング画面を出して完了を待ってから導入シーンへ入る
     await withLoadingScreen(AssetCache.fetchGroup("common"), "物語の準備をしています…");
+    // 集合写真(group_photo_m/f)は共通導入の後半で使うが、common程急ぎではないため
+    // 取得完了を待たずバックグラウンドで先読みしておく
+    AssetCache.fetchGroup("extras");
     startScript("common_intro");
   }
 
