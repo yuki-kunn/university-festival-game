@@ -606,3 +606,30 @@ html, body {
   .char-frame[data-shot="close"] { width: min(84vw, 460px); height: 64vh; max-height: 560px; }
   .quiz-cards { grid-template-columns: 1fr; }
 }
+
+/* ---------- 音声ミュートボタン（全画面共通） ---------- */
+.mute-toggle {
+  position: fixed;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 100;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-accent-soft);
+  background: rgba(20, 18, 26, 0.75);
+  color: var(--color-text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.mute-toggle:hover {
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+.mute-toggle[aria-pressed="true"] {
+  color: var(--color-narration);
+  opacity: 0.6;
+}

@@ -1,224 +1,72 @@
-// 画像素材のIndexedDBキャッシュ + GAS APIからの段階的取得
+// 画像素材のプリロード管理（Cloudflare R2版）
 //
-// localStorageは5〜10MB程度の容量制限があり、画像（将来的には音声も）を
-// 保存するには不十分なため、IndexedDBを使用する。
+// GAS + Google Drive時代は、画像をBase64/JSON化してAPI経由で取得する
+// 方式だったため、IndexedDBキャッシュや複数回のリトライ、コールドスタート
+// 対策のウォームアップリクエストが必要だった。
+// R2は静的ファイルを直接公開URLで配信できるため、その種の複雑さは不要になった。
+// ここでの「取得」は、実体としては Image オブジェクトによるプリロードであり、
+// 実際の画像データはブラウザの標準HTTPキャッシュに委ねる。
 //
 // 使い方（engine.js から）:
-//   await AssetCache.init();                        // 起動時に1回。IndexedDBの内容をメモリへ読み込む
-//   await AssetCache.fetchGroup("common");           // commonグループを取得（キャッシュ済みならAPIを呼ばない）
-//   AssetCache.get("marico_normal");                 // メモリ上のキャッシュから同期的に取得（Data URI文字列 or undefined）
-//   AssetCache.fetchGroup("route_marico");           // ルート選択後に追加取得
+//   await AssetCache.init();                        // 何もしない（互換性のために残置）
+//   await AssetCache.fetchGroup("common");           // commonグループの画像を全てプリロード
+//   AssetCache.get("marico_normal");                 // 画像URL（文字列）を同期的に返す
+//   AssetCache.fetchGroup("route_marico");           // ルート選択後に追加プリロード
 window.AssetCache = (() => {
   "use strict";
 
-  const DB_NAME = "alibi_asset_cache";
-  const DB_VERSION = 1;
-  const IMAGE_STORE = "images";
-  const GROUP_STORE = "groups"; // 取得済みグループの記録（{ name, fetchedAt }）
+  // 素材ID -> URL のマップ。ASSET_GROUPSに載っているIDは常にURLが引ける
+  // （実ファイルの存在確認はプリロード時に行う）。
+  const urlCache = {};
+  Object.keys(window.ASSET_GROUPS || {}).forEach((id) => {
+    urlCache[id] = window.ASSET_BASE_URL + id + ".png";
+  });
 
-  // 展示中に素材を差し替えた場合に古いキャッシュを使い続けないよう、
-  // 一定時間が経過したグループは「未取得」扱いに戻し、再取得させる
-  const GROUP_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6時間
-
-  // 素材ID -> Data URI のメモリキャッシュ（同期アクセス用）
-  const memoryCache = {};
-  // 取得済み（または取得中）のグループ名の記録。IndexedDBにキャッシュがあれば
-  // init() の時点でここに反映されるため、ページを再読み込みしても
-  // 有効期限内なら無駄なfetchGroupを呼ばずに済む
   const loadedGroups = new Set();
-
-  let dbPromise = null;
-
-  function openDb() {
-    if (dbPromise) return dbPromise;
-    dbPromise = new Promise((resolve) => {
-      if (!window.indexedDB) {
-        resolve(null); // IndexedDB非対応環境ではキャッシュなしで動作
-        return;
-      }
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(IMAGE_STORE)) {
-          db.createObjectStore(IMAGE_STORE, { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains(GROUP_STORE)) {
-          db.createObjectStore(GROUP_STORE, { keyPath: "name" });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null); // 失敗してもゲーム進行は止めない
-    });
-    return dbPromise;
-  }
-
-  async function loadAllFromIndexedDb() {
-    const db = await openDb();
-    if (!db) return;
-
-    await new Promise((resolve) => {
-      try {
-        const tx = db.transaction(IMAGE_STORE, "readonly");
-        const req = tx.objectStore(IMAGE_STORE).getAll();
-        req.onsuccess = () => {
-          (req.result || []).forEach((entry) => {
-            memoryCache[entry.id] = entry.dataUri;
-          });
-          resolve();
-        };
-        req.onerror = () => resolve();
-      } catch (err) {
-        resolve();
-      }
-    });
-
-    await new Promise((resolve) => {
-      try {
-        const tx = db.transaction(GROUP_STORE, "readonly");
-        const req = tx.objectStore(GROUP_STORE).getAll();
-        req.onsuccess = () => {
-          const now = Date.now();
-          (req.result || []).forEach((entry) => {
-            if (now - entry.fetchedAt < GROUP_CACHE_TTL_MS) {
-              loadedGroups.add(entry.name); // 有効期限内のみ「取得済み」として扱う
-            }
-          });
-          resolve();
-        };
-        req.onerror = () => resolve();
-      } catch (err) {
-        resolve();
-      }
-    });
-  }
-
-  async function saveManyToIndexedDb(images) {
-    const db = await openDb();
-    if (!db) return;
-    return new Promise((resolve) => {
-      try {
-        const tx = db.transaction(IMAGE_STORE, "readwrite");
-        const store = tx.objectStore(IMAGE_STORE);
-        Object.keys(images).forEach((id) => {
-          store.put({ id, dataUri: images[id] });
-        });
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => resolve(); // 保存失敗してもメモリキャッシュはあるので致命的ではない
-      } catch (err) {
-        resolve();
-      }
-    });
-  }
-
-  async function markGroupFetchedInIndexedDb(groupName) {
-    const db = await openDb();
-    if (!db) return;
-    return new Promise((resolve) => {
-      try {
-        const tx = db.transaction(GROUP_STORE, "readwrite");
-        tx.objectStore(GROUP_STORE).put({ name: groupName, fetchedAt: Date.now() });
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => resolve();
-      } catch (err) {
-        resolve();
-      }
-    });
-  }
-
-  // GAS Web Appは、再デプロイ直後の反映待ちや実行環境のコールドスタートにより
-  // 断続的に404（HTMLのエラーページ）を返すことがある。実測ではコールドスタート
-  // 自体に最大50秒程度かかることがあり（2回目以降は3〜5秒で安定）、それに対応
-  // できるだけの回数・間隔でリトライすることで、一時的な失敗をユーザーに
-  // 見せないようにする。
-  const FETCH_RETRY_COUNT = 4;
-  const FETCH_RETRY_DELAY_MS = 3000;
-
-  function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  // ページ読み込み直後、結果を待たずに投げておく「ウォームアップ」リクエスト。
-  // これによりGASの実行環境をできるだけ早く起こし始め、実際に
-  // fetchGroup("common") が呼ばれる頃には温まっている可能性を上げる。
-  // レスポンスの成否は問わない（失敗しても後続のfetchGroupが正式にリトライする）。
-  function warmUp() {
-    const apiUrl = window.ASSET_API_URL;
-    if (!apiUrl) return;
-    const url = apiUrl + (apiUrl.includes("?") ? "&" : "?") + "group=__warmup__";
-    fetch(url).catch(() => {});
-  }
-
-  async function fetchGroupOnce(groupName) {
-    const apiUrl = window.ASSET_API_URL;
-    const url = apiUrl + (apiUrl.includes("?") ? "&" : "?") + "group=" + encodeURIComponent(groupName);
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error("HTTP " + res.status);
-    }
-    return res.json();
-  }
-
-  // 進行中のグループ取得Promiseを保持する。同じグループに対して複数箇所から
-  // fetchGroupが呼ばれても（例：起動時の先行取得＋名前確定時の待機）、
-  // 実際のリクエストは1回だけ行い、呼び出し元は全員「同じ取得が完了するの」を
-  // 正しく待てるようにする（呼び出し元がローディング画面の要否を正確に判断できる）。
   const inFlightFetches = new Map();
 
+  function idsInGroup(groupName) {
+    const groups = window.ASSET_GROUPS || {};
+    return Object.keys(groups).filter((id) => groups[id].includes(groupName));
+  }
+
+  // 1枚の画像をプリロードする。失敗しても例外は投げず警告を出すだけにする
+  // （1枚欠けても他の画像表示やゲーム進行は止めたくないため）。
+  function preloadOne(id) {
+    return new Promise((resolve) => {
+      const url = urlCache[id];
+      if (!url) { resolve(); return; }
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => {
+        console.warn("[AssetCache] failed to preload:", id, url);
+        resolve();
+      };
+      img.src = url;
+    });
+  }
+
   function fetchGroup(groupName) {
-    if (loadedGroups.has(groupName)) return Promise.resolve(); // 取得完了済み（IndexedDB由来含む）
+    if (loadedGroups.has(groupName)) return Promise.resolve();
 
     const existing = inFlightFetches.get(groupName);
-    if (existing) return existing; // 進行中の取得があれば、それをそのまま返す
+    if (existing) return existing;
 
-    // Map.set を同期的に（awaitの前に）行うことで、この直後に別の場所から
-    // 同じグループに対してfetchGroupが呼ばれても、必ずここで登録した
-    // Promiseを共有できるようにする（取得完了前に「取得済み」と誤判定させない）。
-    const promise = fetchGroupInternal(groupName).finally(() => {
-      inFlightFetches.delete(groupName);
-    });
+    const ids = idsInGroup(groupName);
+    const promise = Promise.all(ids.map(preloadOne))
+      .then(() => { loadedGroups.add(groupName); })
+      .finally(() => { inFlightFetches.delete(groupName); });
     inFlightFetches.set(groupName, promise);
     return promise;
   }
 
-  async function fetchGroupInternal(groupName) {
-    const apiUrl = window.ASSET_API_URL;
-    if (!apiUrl) return; // 未設定ならプレースホルダー運用のまま
-
-    let lastErr = null;
-    for (let attempt = 0; attempt <= FETCH_RETRY_COUNT; attempt++) {
-      if (attempt > 0) {
-        console.warn("[AssetCache] group=" + groupName + " retrying (" + attempt + "/" + FETCH_RETRY_COUNT + ")...");
-        await delay(FETCH_RETRY_DELAY_MS);
-      }
-      try {
-        const data = await fetchGroupOnce(groupName);
-        if (data && data.images) {
-          Object.assign(memoryCache, data.images);
-          saveManyToIndexedDb(data.images); // 完了を待たずゲームは先に進めてよい
-        }
-        if (data && data.errors && data.errors.length) {
-          console.warn("[AssetCache] group=" + groupName + " errors:", data.errors);
-        }
-        loadedGroups.add(groupName); // 取得成功が確定した時点で「完了」を記録する
-        markGroupFetchedInIndexedDb(groupName); // 次回起動時に再取得しないよう記録
-        return; // 成功
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    // リトライしても失敗した場合：プレースホルダー運用にフォールバックする
-    // （loadedGroupsには追加していないので、次にfetchGroupが呼ばれれば再試行される）
-    console.warn("[AssetCache] group=" + groupName + " fetch failed after retry:", lastErr);
-  }
-
   function get(assetId) {
-    return memoryCache[assetId];
+    return urlCache[assetId];
   }
 
   async function init() {
-    warmUp(); // GASの実行環境を早めに起こし始める（結果は待たない）
-    await loadAllFromIndexedDb();
+    // R2移行によりウォームアップやIndexedDB読み込みは不要になったが、
+    // engine.js側の呼び出し互換性のため関数自体は残す。
   }
 
   return { init, fetchGroup, get };
