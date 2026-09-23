@@ -213,6 +213,17 @@
     el.screens[name].classList.add("active");
   }
 
+  // シナリオ・クイズ・エンディングデータの読み込みに失敗した場合の
+  // 最終手段のエラー表示。ゲーム進行に必須のデータが読めない状態では
+  // 続行不可能なため、既存の「未実装ルート」画面を流用し、
+  // タイトルへ戻る導線だけは確保しておく。
+  function showFatalError(context) {
+    console.error("[FatalError]", context);
+    el.notyetMessage.textContent =
+      "データの読み込みに失敗しました。\n通信状況をご確認の上、タイトルへ戻ってやり直してください。";
+    showScreen("notyet");
+  }
+
   // 素材グループの取得を待つ間、ローディング画面を表示する。
   // すでにキャッシュ済みで取得が一瞬（LOADING_SCREEN_DELAY_MS未満）で終わる場合は、
   // ローディング画面を一切表示せずそのまま進める（不要なちらつきを防ぐ）。
@@ -234,10 +245,16 @@
   async function loadScript(id) {
     if (scriptCache[id]) return scriptCache[id];
     const path = SCRIPT_SOURCES[id];
-    const res = await fetch(path);
-    const json = await res.json();
-    scriptCache[id] = json;
-    return json;
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      scriptCache[id] = json;
+      return json;
+    } catch (err) {
+      showFatalError("loadScript(" + id + "): " + err);
+      return null;
+    }
   }
 
   // ニナルートは「夜の部室（姿見の前に立つ）」→「鏡の中に生徒たちが
@@ -368,10 +385,15 @@
       const src = ITEM_IMAGE_SOURCES[itemId];
       if (src) {
         const svgMarkup = await loadItemSvg(itemId, src);
-        el.itemViewerImage.innerHTML = svgMarkup;
-        if (itemId === "old_roster") {
-          applyPlayerNameToRoster();
+        if (svgMarkup) {
+          el.itemViewerImage.innerHTML = svgMarkup;
+          if (itemId === "old_roster") {
+            applyPlayerNameToRoster();
+          }
         }
+        // svgMarkupがnull（読み込み失敗）の場合でも、キャプションだけは
+        // 表示された状態でビューアを開く。1枚のイラストが欠けるだけで
+        // ゲーム進行全体を止めるほどの重大さではないため。
       }
     }
 
@@ -380,10 +402,16 @@
 
   async function loadItemSvg(itemId, src) {
     if (itemSvgCache[itemId]) return itemSvgCache[itemId];
-    const res = await fetch(src);
-    const text = await res.text();
-    itemSvgCache[itemId] = text;
-    return text;
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      itemSvgCache[itemId] = text;
+      return text;
+    } catch (err) {
+      console.warn("[loadItemSvg] failed to load", itemId, err);
+      return null;
+    }
   }
 
   function applyPlayerNameToRoster() {
@@ -514,6 +542,7 @@
 
   async function startScript(id) {
     const script = await loadScript(id);
+    if (!script) return; // 読み込み失敗時はloadScript内で既にエラー画面表示済み
     state.currentScriptId = id;
     state.lines = script.lines;
     state.index = 0;
@@ -598,22 +627,35 @@
 
   async function loadQuizData() {
     if (!quizData) {
-      const res = await fetch(QUIZ_DATA_SRC);
-      quizData = await res.json();
+      try {
+        const res = await fetch(QUIZ_DATA_SRC);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        quizData = await res.json();
+      } catch (err) {
+        showFatalError("loadQuizData: " + err);
+        return null;
+      }
     }
     return quizData;
   }
 
   async function loadEndingsData() {
     if (!endingsData) {
-      const res = await fetch(ENDINGS_SRC);
-      endingsData = await res.json();
+      try {
+        const res = await fetch(ENDINGS_SRC);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        endingsData = await res.json();
+      } catch (err) {
+        showFatalError("loadEndingsData: " + err);
+        return null;
+      }
     }
     return endingsData;
   }
 
   async function startQuiz() {
-    await loadQuizData();
+    const loaded = await loadQuizData();
+    if (!loaded) return; // 読み込み失敗時はloadQuizData内で既にエラー画面表示済み
     state.playthrough.quiz1Correct = null;
     state.playthrough.quiz2Correct = null;
     // 直前のルートで鳴っていたBGM（tension/climax）を止め、
@@ -782,7 +824,8 @@
 
   // ---- クイズ結果からエンディング決定 ----
   async function finishQuiz() {
-    await loadEndingsData();
+    const loaded = await loadEndingsData();
+    if (!loaded) return; // 読み込み失敗時はloadEndingsData内で既にエラー画面表示済み
     const { routeId, bond, quiz1Correct, quiz2Correct } = state.playthrough;
 
     const correctCount = (quiz1Correct ? 1 : 0) + (quiz2Correct ? 1 : 0);
