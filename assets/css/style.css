@@ -261,33 +261,37 @@ html, body {
 }
 
 /* 立ち絵を映す「窓」。中身（img）をscaleで拡大し、はみ出た分をここで
-   クロップすることで、頭〜胸あたりだけを画面いっぱいに映すバストアップ構図にする。
+   クロップすることで、頭〜腰あたりまでを画面の大部分を使って映す、
+   標準的なノベルゲームの構図にする。
    下端はフェードさせず、テキストボックスの裏にそのまま沈める。 */
 .char-frame {
-  width: min(42vw, 400px);
-  height: 82vh;
-  max-height: 760px;
+  width: min(58vw, 620px);
+  height: 96vh;
+  max-height: 980px;
   overflow: hidden;
   position: relative;
   z-index: 1;
-  /* 全身画像の胸〜腰あたりが窓の下端に来るよう、窓自体を少し沈める */
-  margin-bottom: -6vh;
+  /* 胸〜腰あたりが窓の下端に来るよう、窓自体を少し沈める */
+  margin-bottom: -4vh;
 }
 .char-frame[data-shot="close"] {
-  width: min(48vw, 460px);
-  height: 90vh;
-  max-height: 840px;
-  margin-bottom: -4vh;
+  width: min(66vw, 700px);
+  height: 100vh;
+  max-height: 1040px;
+  margin-bottom: -2vh;
 }
 
 .char-sprite {
-  /* 素材は高解像度（実測 目安1024x1536px、ニナのみ684x2048px）のため、
-     .char-frameの幅いっぱいまで自然に拡大しても画質劣化が目立たない。
-     頭部を基準に配置し、親の.char-frameでクロップしてバストアップに見せる。 */
+  /* 素材は高解像度（実測 目安1024x1536px）のため、大きく拡大しても
+     画質劣化が目立たない。頭部を基準に配置し、親の.char-frameで
+     クロップして画面の大部分を占める構図にする。
+     頭上にわずかな余白を残しつつ、腰あたりまで見えるバランスを狙い、
+     窓の幅よりやや広い程度の拡大率に留める（widthを窓幅に対して
+     大きくしすぎると、縦方向が頭部付近だけでクロップされてしまう）。 */
   position: absolute;
-  top: 0;
+  top: 4%;
   left: 50%;
-  width: 480px;
+  width: 560px;
   height: auto;
   transform: translateX(-50%) scale(1);
   transform-origin: top center;
@@ -295,7 +299,15 @@ html, body {
   transition: transform 0.3s ease;
 }
 .char-frame[data-shot="close"] .char-sprite {
-  transform: translateX(-50%) scale(1.25);
+  transform: translateX(-50%) scale(1.35);
+}
+
+/* ニナの立ち絵素材だけ元画像が縦長（実測684x2048px、他は1024x1536px
+   で縦横比が約2倍違う）ため、同じwidthだと他キャラより大きく・
+   寄って見えてしまう。widthを個別に約半分にし、表示上の身長（頭から
+   膝までの見かけの高さ）を他キャラと揃える。 */
+.char-sprite.nina {
+  width: 280px;
 }
 
 /* キャラ不在時のダミー表示（色付きシルエット） */
@@ -609,8 +621,8 @@ html, body {
   .textbox { padding: 1.2rem 1.3rem; min-height: 140px; }
   .line-text { font-size: 1rem; }
   /* 縦長画面では横幅の余裕がないため、窓の幅を画面幅基準に広げる */
-  .char-frame { width: min(74vw, 420px); height: 58vh; max-height: 520px; }
-  .char-frame[data-shot="close"] { width: min(84vw, 460px); height: 64vh; max-height: 560px; }
+  .char-frame { width: min(88vw, 480px); height: 72vh; max-height: 640px; margin-bottom: -3vh; }
+  .char-frame[data-shot="close"] { width: min(96vw, 520px); height: 78vh; max-height: 680px; margin-bottom: -2vh; }
   .quiz-cards { grid-template-columns: 1fr; }
 }
 

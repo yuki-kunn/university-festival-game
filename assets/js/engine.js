@@ -94,6 +94,16 @@
 
   const DEFAULT_PLAYER_NAME = "＜主人公＞";
 
+  // シナリオ本文には「主人公」が固定文字列で書かれているため、
+  // 表示直前にプレイヤーが入力した名前へ置換する。
+  // 「主人公くん」は呼びかけ表現なので「くん」を残したまま名前だけ差し替える。
+  function applyPlayerName(text) {
+    const name = state.playthrough.playerName || DEFAULT_PLAYER_NAME;
+    return text
+      .split("〈主人公の名前〉").join(name)
+      .split("主人公").join(name);
+  }
+
   const quizState = {
     step: null,
     selectedContradiction: [],
@@ -323,7 +333,10 @@
     const assetUrl = imageId && AssetCache.get(imageId);
     if (assetUrl) {
       const img = document.createElement("img");
-      img.className = "char-sprite";
+      // 話者ごとのクラス（marico/niko/nina/mc）も付与する。ニナの立ち絵
+      // 素材だけ元画像の縦横比が大きく異なる（縦に長い）ため、CSS側で
+      // 個別に拡大率を調整し、見た目の大きさを他キャラと揃えるために使う。
+      img.className = "char-sprite " + CHAR_CLASS[speaker];
       img.src = assetUrl;
       img.alt = speaker;
       frame.appendChild(img);
@@ -450,7 +463,7 @@
   function skipTyping() {
     clearTimeout(state.typingTimer);
     const line = state.lines[state.index];
-    el.lineText.textContent = line.text;
+    el.lineText.textContent = applyPlayerName(line.text);
     state.isTyping = false;
     el.nextIndicator.style.visibility = "visible";
   }
@@ -468,7 +481,8 @@
     updateSceneAudio(state.currentScriptId, state.index);
 
     if (line.speaker) {
-      el.speakerName.textContent = line.speaker === "放送" ? "？？？（放送）" : line.speaker;
+      const displaySpeaker = line.speaker === "放送" ? "？？？（放送）" : applyPlayerName(line.speaker);
+      el.speakerName.textContent = displaySpeaker;
       el.speakerName.setAttribute("data-speaker", line.speaker);
       el.textbox.classList.remove("narration");
     } else {
@@ -476,7 +490,7 @@
       el.textbox.classList.add("narration");
     }
 
-    typeLine(line.text);
+    typeLine(applyPlayerName(line.text));
   }
 
   function advance() {
@@ -680,7 +694,7 @@
 
   function showQuizIntro() {
     el.quizTitle.textContent = "推理パート";
-    el.quizPrompt.textContent = quizData.intro.lines.map(l => l.text).join("\n\n");
+    el.quizPrompt.textContent = applyPlayerName(quizData.intro.lines.map(l => l.text).join("\n\n"));
     el.quizCardsContradiction.hidden = true;
     el.quizTimelineWrap.hidden = true;
     el.btnQuizSubmit.hidden = false;
@@ -699,7 +713,7 @@
     quizState.selectedContradiction = [];
 
     el.quizTitle.textContent = q.title;
-    el.quizPrompt.textContent = q.prompt;
+    el.quizPrompt.textContent = applyPlayerName(q.prompt);
 
     el.quizCardsContradiction.hidden = false;
     el.quizTimelineWrap.hidden = true;
@@ -709,7 +723,7 @@
     q.cards.forEach(card => {
       const div = document.createElement("div");
       div.className = "quiz-card";
-      div.textContent = card.text;
+      div.textContent = applyPlayerName(card.text);
       div.dataset.id = card.id;
       div.addEventListener("click", () => toggleContradictionCard(div, card.id));
       el.quizCardsContradiction.appendChild(div);
@@ -756,7 +770,7 @@
     quizState.timelineRemaining = q.cards.map(c => c.id);
 
     el.quizTitle.textContent = q.title;
-    el.quizPrompt.textContent = q.prompt;
+    el.quizPrompt.textContent = applyPlayerName(q.prompt);
 
     el.quizCardsContradiction.hidden = true;
     el.quizTimelineWrap.hidden = false;
@@ -777,7 +791,7 @@
     q.cards.forEach(card => {
       const div = document.createElement("div");
       div.className = "quiz-card";
-      div.textContent = card.text;
+      div.textContent = applyPlayerName(card.text);
       div.dataset.id = card.id;
       if (quizState.timelineOrder.includes(card.id)) {
         div.classList.add("used");
@@ -794,7 +808,7 @@
       const card = q.cards.find(c => c.id === id);
       const div = document.createElement("div");
       div.className = "quiz-slot";
-      div.innerHTML = '<span class="slot-num">' + (i + 1) + '.</span><span>' + card.text + "</span>";
+      div.innerHTML = '<span class="slot-num">' + (i + 1) + '.</span><span>' + applyPlayerName(card.text) + "</span>";
       el.quizTimelineSlots.appendChild(div);
     });
     el.btnQuizSubmit.disabled = quizState.timelineOrder.length !== q.cards.length;
