@@ -261,8 +261,8 @@ html, body {
 }
 
 /* 立ち絵を映す「窓」。中身（img）をscaleで拡大し、はみ出た分をここで
-   クロップすることで、頭〜腰あたりまでを画面の大部分を使って映す、
-   標準的なノベルゲームの構図にする。
+   クロップすることで、顔・上半身が画面の大部分を占める、寄った構図にする
+   （頭上の余白はごくわずか、胸〜二の腕あたりでクロップされる）。
    下端はフェードさせず、テキストボックスの裏にそのまま沈める。 */
 .char-frame {
   width: min(58vw, 620px);
@@ -271,7 +271,7 @@ html, body {
   overflow: hidden;
   position: relative;
   z-index: 1;
-  /* 胸〜腰あたりが窓の下端に来るよう、窓自体を少し沈める */
+  /* 胸〜二の腕あたりが窓の下端に来るよう、窓自体を少し沈める */
   margin-bottom: -4vh;
 }
 .char-frame[data-shot="close"] {
@@ -285,13 +285,17 @@ html, body {
   /* 素材は高解像度（実測 目安1024x1536px）のため、大きく拡大しても
      画質劣化が目立たない。頭部を基準に配置し、親の.char-frameで
      クロップして画面の大部分を占める構図にする。
-     頭上にわずかな余白を残しつつ、腰あたりまで見えるバランスを狙い、
-     窓の幅よりやや広い程度の拡大率に留める（widthを窓幅に対して
-     大きくしすぎると、縦方向が頭部付近だけでクロップされてしまう）。 */
+     頭上の余白をごくわずかに抑え、顔が画面の大部分を占め、胸〜二の腕
+     あたりで自然にクロップされるバランスを狙う。
+     【重要】素材（例: niko_normal.png）は頭頂部が画像の最上端ギリギリ
+     （実測、画像全体の約1%位置）にあるため、topを0%未満（マイナス）に
+     すると.char-frameのoverflow:hiddenによって頭頂部が直線状に
+     切断されてしまう。topは必ず0%以上を保ち、寄りの強さはwidth
+     （拡大率）側で調整すること。 */
   position: absolute;
-  top: 4%;
+  top: 1%;
   left: 50%;
-  width: 560px;
+  width: 1450px;
   height: auto;
   transform: translateX(-50%) scale(1);
   transform-origin: top center;
@@ -299,15 +303,21 @@ html, body {
   transition: transform 0.3s ease;
 }
 .char-frame[data-shot="close"] .char-sprite {
-  transform: translateX(-50%) scale(1.35);
+  /* デフォルト値自体がすでに大きくズームした構図になったため、closeup用の
+     追加倍率は旧来の1.35から大幅に引き下げ、顔が破綻して寄りすぎないよう
+     一段階分だけさらに寄せる程度に留める。 */
+  transform: translateX(-50%) scale(1.1);
 }
 
 /* ニナの立ち絵素材だけ元画像が縦長（実測684x2048px、他は1024x1536px
    で縦横比が約2倍違う）ため、同じwidthだと他キャラより大きく・
-   寄って見えてしまう。widthを個別に約半分にし、表示上の身長（頭から
-   膝までの見かけの高さ）を他キャラと揃える。 */
+   寄って見えてしまう。当初は「レンダリング後の全身の見かけの高さ」を
+   他キャラと揃える計算（726px）にしていたが、ニナの素材は顔まわりの
+   余白比率が他キャラと異なり、頭部が一回り小さく見える問題があった。
+   頭頂部〜目のラインの縦幅比率を他キャラ（約21.5%）に揃えるため、
+   726px × 1.19 ≈ 864px に拡大している。 */
 .char-sprite.nina {
-  width: 280px;
+  width: 864px;
 }
 
 /* キャラ不在時のダミー表示（色付きシルエット） */
@@ -623,6 +633,14 @@ html, body {
   /* 縦長画面では横幅の余裕がないため、窓の幅を画面幅基準に広げる */
   .char-frame { width: min(88vw, 480px); height: 72vh; max-height: 640px; margin-bottom: -3vh; }
   .char-frame[data-shot="close"] { width: min(96vw, 520px); height: 78vh; max-height: 680px; margin-bottom: -2vh; }
+  /* デスクトップ版と同じ「頭上余白わずか・胸あたりでクロップ」の構図を、
+     縮小した.char-frameの高さに合わせて維持する。topは0%以上のsafe値を
+     維持し、マイナスにはしない（頭頂部がoverflow:hiddenで直線状に
+     切断されるのを防ぐため）。デスクトップと同じtop:1%だと相対的に
+     余白がやや多く見えたため、安全マージンを保ったままtopを5%まで
+     増やし、widthも950→980pxにわずかに拡大して寄りを強めている。 */
+  .char-sprite { top: 5%; width: 980px; }
+  .char-sprite.nina { width: 583px; }
   .quiz-cards { grid-template-columns: 1fr; }
 }
 
