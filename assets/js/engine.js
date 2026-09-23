@@ -133,6 +133,7 @@
   // 背景キー -> 素材APIの画像ID
   const BG_IMAGE_ID = {
     clubroom: "clubroom_day",
+    clubroom_night: "clubroom_night",
     corridor: "corridor",
     broadcast: "broadcast_room",
     library: "library",
@@ -239,12 +240,19 @@
     return json;
   }
 
+  // ニナルートは「夜の部室（姿見の前に立つ）」→「鏡の中に生徒たちが
+  // 見え始める（10行目）」で背景を切り替える2段階構成。
+  // data/script_nina.jsonを実際に読み、以下を基準に設定している：
+  //   0-9行目 : まだ何も起きていない夜の部室 → clubroom_night
+  //   10行目〜: 「鏡の表面が僅かに揺らいだ」以降、鏡の中の異変が見え始める → mirror
+  const NINA_MIRROR_START_INDEX = 10;
+
   function setBackground(scriptId, lineIndex) {
     let bg = "clubroom";
     if (scriptId === "common_intro" && lineIndex >= 25 && lineIndex < 42) bg = "corridor";
     if (scriptId === "route_marico") bg = "broadcast";
     if (scriptId === "route_niko") bg = "library";
-    if (scriptId === "route_nina") bg = "mirror";
+    if (scriptId === "route_nina") bg = lineIndex >= NINA_MIRROR_START_INDEX ? "mirror" : "clubroom_night";
 
     const imageId = BG_IMAGE_ID[bg];
     const assetUrl = imageId && AssetCache.get(imageId);
