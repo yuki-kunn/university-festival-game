@@ -17,6 +17,21 @@ window.AudioManager = (() => {
   const SE_VOLUME = 0.7;
   const MUTE_STORAGE_KEY = "alibi_audio_muted";
 
+  // 効果音は本来ワンショットの短い音を想定しているが、素材によっては
+  // 想定より大幅に長いことがあり（実測: click 1.0s, broadcast_noise 2.3s,
+  // chime 26.0s, cold_wind 104.8s）、そのまま鳴らすと別のシーンや
+  // 他の音と干渉してしまう。特に cold_wind は「現象が近づく気配」を
+  // 一瞬伝える効果音としては明らかに長すぎるため、既定の上限より
+  // 短い個別の上限を設定し、超えたら自動的にフェードアウトさせる。
+  // ここに指定がないキーは自然に最後まで鳴らす（＝上限なし）。
+  const SE_MAX_DURATION_MS = { cold_wind: 4000 };
+  const SE_FADEOUT_MS = 500;
+
+  // 同じ効果音キーが重複して鳴り続けるのを防ぐため、キーごとに
+  // 現在再生中のAudioインスタンスを記録する（同じキーが再度鳴らされたら
+  // 前のインスタンスを止めてから新しく鳴らす）。
+  const activeSePlayers = new Map();
+
   const bgmPlayers = [new Audio(), new Audio()];
   bgmPlayers.forEach(p => { p.loop = true; p.volume = 0; p.preload = "auto"; });
   let activeBgmIndex = 0;
@@ -91,6 +106,15 @@ window.AudioManager = (() => {
     });
   }
 
+  function stopSe(audio, fadeMs) {
+    if (fadeMs) {
+      fade(audio, audio.volume, 0, fadeMs);
+      setTimeout(() => audio.pause(), fadeMs + 50);
+    } else {
+      audio.pause();
+    }
+  }
+
   function playSe(key) {
     if (muted || !unlocked) return;
     const src = window.AUDIO_SOURCES && window.AUDIO_SOURCES.se && window.AUDIO_SOURCES.se[key];
@@ -98,10 +122,33 @@ window.AudioManager = (() => {
       console.warn("[AudioManager] unknown se key:", key);
       return;
     }
+
+    // 同じ効果音が既に鳴っていれば、フェードなしで即座に止めてから鳴らし直す
+    const prev = activeSePlayers.get(key);
+    if (prev) stopSe(prev, 0);
+
     const audio = new Audio(src);
     audio.volume = SE_VOLUME;
+    activeSePlayers.set(key, audio);
+
+    const clearIfCurrent = () => {
+      if (activeSePlayers.get(key) === audio) activeSePlayers.delete(key);
+    };
+    audio.addEventListener("ended", clearIfCurrent);
+
     const playPromise = audio.play();
     if (playPromise && playPromise.catch) playPromise.catch(() => {});
+
+    // 効果音として想定より長い素材（例: cold_wind）が別シーンまで
+    // 鳴り続けないよう、個別に上限が指定されているものだけ自動フェードアウトする
+    const maxDurationMs = SE_MAX_DURATION_MS[key];
+    if (maxDurationMs) {
+      setTimeout(() => {
+        if (activeSePlayers.get(key) !== audio) return; // 既に自然終了・差し替え済み
+        stopSe(audio, SE_FADEOUT_MS);
+        clearIfCurrent();
+      }, maxDurationMs);
+    }
   }
 
   function setMuted(value) {
