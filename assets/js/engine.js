@@ -8,13 +8,19 @@
     route_nina: "data/script_nina.json"
   };
 
-  const QUIZ_DATA_SRC = "data/quiz_common.json";
+  // クイズはルート固有の手がかり（放送機材/貸出カード/部員名簿）を
+  // 踏まえた内容になっており、ルートごとに別ファイルを用意している。
+  const QUIZ_DATA_SOURCES = {
+    route_marico: "data/quiz_marico.json",
+    route_niko: "data/quiz_niko.json",
+    route_nina: "data/quiz_nina.json"
+  };
   const ENDINGS_SRC = "data/endings.json";
 
   const NOT_IMPLEMENTED_ROUTES = {};
 
   const scriptCache = {};
-  let quizData = null;
+  const quizDataCache = {}; // routeId -> クイズデータ
   let endingsData = null;
 
   const el = {
@@ -521,7 +527,7 @@
     }
     if (scriptId === "quiz_common") {
       state.playthrough.routeId = state.currentScriptId;
-      await startQuiz();
+      await startQuiz(state.playthrough.routeId);
       return;
     }
 
@@ -625,18 +631,25 @@
 
   // ===================== 推理クイズ =====================
 
-  async function loadQuizData() {
-    if (!quizData) {
-      try {
-        const res = await fetch(QUIZ_DATA_SRC);
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        quizData = await res.json();
-      } catch (err) {
-        showFatalError("loadQuizData: " + err);
-        return null;
-      }
+  let quizData = null; // 現在プレイ中のルートのクイズデータ（他の関数から参照される）
+
+  async function loadQuizData(routeId) {
+    if (quizDataCache[routeId]) {
+      quizData = quizDataCache[routeId];
+      return quizData;
     }
-    return quizData;
+    const src = QUIZ_DATA_SOURCES[routeId];
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      quizDataCache[routeId] = data;
+      quizData = data;
+      return data;
+    } catch (err) {
+      showFatalError("loadQuizData(" + routeId + "): " + err);
+      return null;
+    }
   }
 
   async function loadEndingsData() {
@@ -653,8 +666,8 @@
     return endingsData;
   }
 
-  async function startQuiz() {
-    const loaded = await loadQuizData();
+  async function startQuiz(routeId) {
+    const loaded = await loadQuizData(routeId);
     if (!loaded) return; // 読み込み失敗時はloadQuizData内で既にエラー画面表示済み
     state.playthrough.quiz1Correct = null;
     state.playthrough.quiz2Correct = null;
