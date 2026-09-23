@@ -281,21 +281,21 @@ html, body {
 }
 
 .char-sprite {
-  /* 素材は元解像度が低い（実測 目安124x341px程度）ため、幅全体を
-     大きく引き伸ばすとぼやけが目立つ。控えめな拡大率で頭部を
-     基準に配置し、親の.char-frameでクロップしてバストアップに見せる。 */
+  /* 素材は高解像度（実測 目安1024x1536px、ニナのみ684x2048px）のため、
+     .char-frameの幅いっぱいまで自然に拡大しても画質劣化が目立たない。
+     頭部を基準に配置し、親の.char-frameでクロップしてバストアップに見せる。 */
   position: absolute;
   top: 0;
   left: 50%;
-  width: 190px;
+  width: 480px;
   height: auto;
-  transform: translateX(-50%) scale(1.35);
+  transform: translateX(-50%) scale(1);
   transform-origin: top center;
   filter: drop-shadow(0 10px 24px rgba(0,0,0,0.5));
   transition: transform 0.3s ease;
 }
 .char-frame[data-shot="close"] .char-sprite {
-  transform: translateX(-50%) scale(1.7);
+  transform: translateX(-50%) scale(1.25);
 }
 
 /* キャラ不在時のダミー表示（色付きシルエット） */
