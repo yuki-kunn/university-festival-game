@@ -244,6 +244,7 @@ html, body {
   z-index: 0;
 }
 .bg-layer[data-bg="clubroom"] { background: linear-gradient(180deg, #2c2438 0%, #171320 100%); }
+.bg-layer[data-bg="clubroom_night"] { background: linear-gradient(180deg, #14121f 0%, #08070d 100%); }
 .bg-layer[data-bg="corridor"] { background: linear-gradient(180deg, #232030 0%, #0e0d15 100%); }
 .bg-layer[data-bg="broadcast"] { background: linear-gradient(180deg, #1c2233 0%, #0a0c14 100%); }
 .bg-layer[data-bg="library"] { background: linear-gradient(180deg, #1f2436 0%, #0c0e16 100%); }
