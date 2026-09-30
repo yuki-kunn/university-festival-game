@@ -53,20 +53,23 @@
       <text x="105" y="266" id="player-name-text" data-default="＜主人公＞">＜主人公＞</text>
     </g>
 
-    <!-- 右ページ：古い代の記録。1名だけ名前が消えかけている（Bの示唆） -->
+    <!-- 右ページ：古い代の記録。1名だけ名前が消えかけている（Bの示唆）。
+         右ページは綴じ線(x=199)〜右端(x=328)の幅129pxしかないため、
+         本文の開始位置(x)を左ページの見出しと揃える形で詰め、
+         全角スペースを削って文字数も減らすことで右端に収める。 -->
     <g font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="11" fill="#4a4030">
-      <text x="215" y="130" font-size="10" fill="#6a5f48">◆十年前・当時の部員</text>
-      <text x="220" y="150">三年　（部長）　――――</text>
-      <text x="220" y="170">二年　◯◯　◯◯</text>
+      <text x="209" y="130" font-size="10" fill="#6a5f48">◆十年前・当時の部員</text>
+      <text x="209" y="150">三年（部長）――――</text>
+      <text x="209" y="170">二年　◯◯　◯◯</text>
       <g mask="url(#fadeMask)">
-        <text x="220" y="190">二年　◯◯　◯◯</text>
+        <text x="209" y="190">二年　◯◯　◯◯</text>
       </g>
-      <text x="220" y="210">一年　◯◯　◯◯</text>
-      <text x="220" y="230">一年　◯◯　◯◯</text>
+      <text x="209" y="210">一年　◯◯　◯◯</text>
+      <text x="209" y="230">一年　◯◯　◯◯</text>
     </g>
 
     <!-- 「以降、記録なし」の走り書き風注記 -->
-    <text x="220" y="260" font-family="sans-serif" font-size="9" fill="#8a5040" font-style="italic">※当該年度、以降の記録に空白あり</text>
+    <text x="209" y="260" font-family="sans-serif" font-size="7.3" fill="#8a5040" font-style="italic">※当該年度、以降の記録に空白あり</text>
 
     <!-- 折れ・破れの表現 -->
     <path d="M 320 320 L 330 330 L 328 335 L 315 328 Z" fill="#4a3f30" opacity="0.5"/>
