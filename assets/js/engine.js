@@ -400,10 +400,12 @@
     const assetUrl = imageId && AssetCache.get(imageId);
     if (assetUrl) {
       const img = document.createElement("img");
-      // 話者ごとのクラス（marico/niko/nina/mc）も付与する。ニナの立ち絵
-      // 素材だけ元画像の縦横比が大きく異なる（縦に長い）ため、CSS側で
-      // 個別に拡大率を調整し、見た目の大きさを他キャラと揃えるために使う。
-      img.className = "char-sprite " + CHAR_CLASS[speaker];
+      // 話者ごとのクラス（marico/niko/nina/mc）に加えて、画像ID単位の
+      // クラス（例: img-nina_normal）も付与する。素材によっては同じ
+      // キャラでも表情差分ごとに元画像の縦横比が大きく異なるものがある
+      // （nina_normalのみ縦長、niko_seriousのみ縦長、他は標準比率）ため、
+      // キャラ単位ではなく画像ID単位でCSS側の拡大率を調整できるようにする。
+      img.className = "char-sprite " + CHAR_CLASS[speaker] + " img-" + imageId;
       img.src = assetUrl;
       img.alt = speaker;
       frame.appendChild(img);

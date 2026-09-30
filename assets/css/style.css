@@ -309,15 +309,25 @@ html, body {
   transform: translateX(-50%) scale(1.1);
 }
 
-/* ニナの立ち絵素材だけ元画像が縦長（実測684x2048px、他は1024x1536px
-   で縦横比が約2倍違う）ため、同じwidthだと他キャラより大きく・
-   寄って見えてしまう。当初は「レンダリング後の全身の見かけの高さ」を
-   他キャラと揃える計算（726px）にしていたが、ニナの素材は顔まわりの
-   余白比率が他キャラと異なり、頭部が一回り小さく見える問題があった。
-   頭頂部〜目のラインの縦幅比率を他キャラ（約21.5%）に揃えるため、
-   726px × 1.19 ≈ 864px に拡大している。 */
-.char-sprite.nina {
-  width: 864px;
+/* 表情差分ごとに元画像の縦横比が異なる素材がある（標準は1024x1536px）
+   ため、キャラ単位ではなく画像ID単位でwidthを個別調整する。
+   基準（1024x1536px, width 1450px）でのレンダリング後の見かけの高さは
+   1450 * 1536/1024 = 2175px。この高さに揃うよう、縦長素材のwidthを
+   「元画像width * 2175 / 元画像height」で逆算している。
+
+   - nina_normal（実測684x2048px）: 684 * 2175/2048 ≈ 726px。
+     以前は頭部が一回り小さく見えるとして864pxまで拡大していたが、
+     今度は逆に大きすぎるとの指摘を受け、単純な高さ合わせの726pxへ
+     戻した上で、頭上の余白量を見ながら微調整する。
+   - niko_serious（実測725x2170px）: 725 * 2175/2170 ≈ 727px。
+     nina_normal同様の縦長素材で、個別調整がないまま基準widthが
+     適用され、他キャラより大幅に大きく表示されてしまっていた。
+   nina_fading（1024x1536px）は標準比率のため対象外。 */
+.char-sprite.img-nina_normal {
+  width: 726px;
+}
+.char-sprite.img-niko_serious {
+  width: 727px;
 }
 
 /* キャラ不在時のダミー表示（色付きシルエット） */
@@ -640,7 +650,10 @@ html, body {
      余白がやや多く見えたため、安全マージンを保ったままtopを5%まで
      増やし、widthも950→980pxにわずかに拡大して寄りを強めている。 */
   .char-sprite { top: 5%; width: 980px; }
-  .char-sprite.nina { width: 583px; }
+  /* デスクトップと同じ考え方で、縦長素材（nina_normal/niko_serious）の
+     見かけの高さを基準（980 * 1536/1024 = 1470px）に揃える。 */
+  .char-sprite.img-nina_normal { width: 491px; }
+  .char-sprite.img-niko_serious { width: 491px; }
   .quiz-cards { grid-template-columns: 1fr; }
 }
 
