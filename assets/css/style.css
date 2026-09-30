@@ -670,3 +670,122 @@ html, body {
   color: var(--color-narration);
   opacity: 0.6;
 }
+
+/* ---------- コンフィグ（ハンバーガーメニュー、全画面共通） ---------- */
+.config-toggle {
+  position: fixed;
+  top: 0.9rem;
+  right: 3.9rem;
+  z-index: 100;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-accent-soft);
+  background: rgba(20, 18, 26, 0.75);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.config-toggle:hover {
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+.config-toggle span {
+  display: block;
+  width: 1.1rem;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: 1px;
+}
+
+.config-overlay[hidden] {
+  display: none;
+}
+.config-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 9, 14, 0.75);
+  backdrop-filter: blur(2px);
+}
+
+.config-panel {
+  width: min(90%, 420px);
+  background: var(--color-panel);
+  border: 1px solid var(--color-accent-soft);
+  border-radius: 16px;
+  padding: 1.6rem 1.8rem 1.8rem 1.8rem;
+}
+
+.config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+  border-bottom: 1px solid var(--color-accent-soft);
+  padding-bottom: 0.8rem;
+}
+.config-title {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text);
+  font-family: 'Noto Serif JP', serif;
+}
+.config-close {
+  background: transparent;
+  border: none;
+  color: var(--color-narration);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.config-close:hover {
+  color: var(--color-text);
+}
+
+.config-row {
+  margin-bottom: 1.5rem;
+}
+.config-label {
+  display: block;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  color: var(--color-narration);
+  margin-bottom: 0.6rem;
+}
+.config-slider {
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+.config-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-narration);
+  opacity: 0.7;
+  margin-top: 0.2rem;
+}
+
+.config-actions {
+  margin-top: 1.8rem;
+  text-align: center;
+}
+.config-actions .btn-secondary {
+  margin: 0;
+}
+
+/* ---------- タイトル画面「つづきから」ボタン ---------- */
+.btn-continue {
+  margin-top: 1.2rem;
+}
