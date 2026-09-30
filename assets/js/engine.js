@@ -19,6 +19,37 @@
 
   const NOT_IMPLEMENTED_ROUTES = {};
 
+  // ---- 分岐点（ルート開始地点）からの再開 ----
+  // 「共通導入→マリコ/ニコ/ニナのルート選択」の分岐点のみをセーブ対象とする。
+  // ルート開始のタイミングでプレイヤー名・性別・選択ルートIDを保存し、
+  // タイトル画面の「つづきから」で復元する。
+  const SAVE_STORAGE_KEY = "alibi_save_route_start";
+
+  function saveRouteCheckpoint(routeId) {
+    try {
+      const data = {
+        routeId,
+        playerName: state.playthrough.playerName,
+        playerGender: state.playthrough.playerGender
+      };
+      localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      // 保存できなくても致命的ではないので無視する
+    }
+  }
+
+  function loadRouteCheckpoint() {
+    try {
+      const raw = localStorage.getItem(SAVE_STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !SCRIPT_SOURCES[data.routeId]) return null;
+      return data;
+    } catch (err) {
+      return null;
+    }
+  }
+
   const scriptCache = {};
   const quizDataCache = {}; // routeId -> クイズデータ
   let endingsData = null;
@@ -35,6 +66,7 @@
     },
     loadingText: document.getElementById("loading-text"),
     btnStart: document.getElementById("btn-start"),
+    btnContinue: document.getElementById("btn-continue"),
     inputPlayerName: document.getElementById("input-player-name"),
     btnNameConfirm: document.getElementById("btn-name-confirm"),
     btnGenderM: document.getElementById("btn-gender-m"),
@@ -42,6 +74,14 @@
     btnMuteToggle: document.getElementById("btn-mute-toggle"),
     btnBackTitle: document.getElementById("btn-back-title"),
     btnRestart: document.getElementById("btn-restart"),
+
+    btnConfigOpen: document.getElementById("btn-config-open"),
+    btnConfigClose: document.getElementById("btn-config-close"),
+    btnConfigTitle: document.getElementById("btn-config-title"),
+    configOverlay: document.getElementById("config-overlay"),
+    configTextSpeed: document.getElementById("config-text-speed"),
+    configBgmVolume: document.getElementById("config-bgm-volume"),
+    configSeVolume: document.getElementById("config-se-volume"),
     novelScreen: document.getElementById("screen-novel"),
     bgLayer: document.getElementById("bg-layer"),
     charLayer: document.getElementById("char-layer"),
@@ -93,6 +133,30 @@
   };
 
   const DEFAULT_PLAYER_NAME = "＜主人公＞";
+
+  // ---- コンフィグ（テキスト速度） ----
+  // スライダーの値（1=遅い/2=普通/3=速い）と、1文字あたりの表示間隔(ms)の対応。
+  const TEXT_SPEED_MS = { 1: 48, 2: 28, 3: 12 };
+  const TEXT_SPEED_STORAGE_KEY = "alibi_text_speed";
+  let textSpeedLevel = loadTextSpeedPref();
+
+  function loadTextSpeedPref() {
+    try {
+      const raw = localStorage.getItem(TEXT_SPEED_STORAGE_KEY);
+      const v = parseInt(raw, 10);
+      return TEXT_SPEED_MS[v] ? v : 2;
+    } catch (err) {
+      return 2;
+    }
+  }
+
+  function saveTextSpeedPref(level) {
+    try {
+      localStorage.setItem(TEXT_SPEED_STORAGE_KEY, String(level));
+    } catch (err) {
+      // 保存できなくても致命的ではないので無視する
+    }
+  }
 
   // シナリオ本文には「主人公」が固定文字列で書かれているため、
   // 表示直前にプレイヤーが入力した名前へ置換する。
@@ -227,6 +291,9 @@
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
     el.screens[name].classList.add("active");
+    if (name === "title") {
+      el.btnContinue.hidden = !loadRouteCheckpoint();
+    }
   }
 
   // シナリオ・クイズ・エンディングデータの読み込みに失敗した場合の
@@ -354,7 +421,7 @@
     el.nextIndicator.style.visibility = "hidden";
     el.lineText.textContent = "";
     let i = 0;
-    const speed = 28;
+    const speed = TEXT_SPEED_MS[textSpeedLevel] || TEXT_SPEED_MS[2];
 
     function step() {
       if (i <= text.length) {
@@ -549,6 +616,7 @@
     // 取得が一瞬で終わる場合（キャッシュ済み等）はローディング画面を出さない。
     const group = ROUTE_ASSET_GROUP[scriptId];
     if (group) {
+      saveRouteCheckpoint(scriptId);
       await withLoadingScreen(AssetCache.fetchGroup(group), "調査の準備をしています…");
     }
 
@@ -590,6 +658,29 @@
     el.inputPlayerName.focus();
   });
 
+  el.btnContinue.addEventListener("click", () => {
+    continueFromCheckpoint();
+  });
+
+  async function continueFromCheckpoint() {
+    const save = loadRouteCheckpoint();
+    if (!save) return; // ボタンが表示されている以上通常起きないが、念のため
+
+    state.playthrough.playerName = save.playerName || DEFAULT_PLAYER_NAME;
+    state.playthrough.playerGender = save.playerGender === "f" ? "f" : "m";
+    lastBgmSceneKey = null;
+
+    await withLoadingScreen(AssetCache.fetchGroup("common"), "物語の準備をしています…");
+    AssetCache.fetchGroup("extras");
+
+    const group = ROUTE_ASSET_GROUP[save.routeId];
+    if (group) {
+      await withLoadingScreen(AssetCache.fetchGroup(group), "調査の準備をしています…");
+    }
+
+    await startScript(save.routeId);
+  }
+
   el.btnNameConfirm.addEventListener("click", () => {
     confirmPlayerNameAndStart();
   });
@@ -611,6 +702,60 @@
     AudioManager.setMuted(nextMuted);
     el.btnMuteToggle.textContent = nextMuted ? "🔇" : "🔊";
     el.btnMuteToggle.setAttribute("aria-pressed", String(nextMuted));
+  });
+
+  // ---- コンフィグパネル ----
+  function openConfig() {
+    el.configTextSpeed.value = String(textSpeedLevel);
+    el.configBgmVolume.value = String(Math.round(AudioManager.getBgmVolume() * 100));
+    el.configSeVolume.value = String(Math.round(AudioManager.getSeVolume() * 100));
+    el.configOverlay.hidden = false;
+  }
+
+  function closeConfig() {
+    el.configOverlay.hidden = true;
+  }
+
+  el.btnConfigOpen.addEventListener("click", (e) => {
+    e.stopPropagation(); // ノベル画面クリックでのテキスト送りに巻き込まれないようにする
+    openConfig();
+  });
+
+  el.btnConfigClose.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeConfig();
+  });
+
+  // パネル外（オーバーレイの背景部分）をクリックしても閉じられるようにする
+  el.configOverlay.addEventListener("click", (e) => {
+    if (e.target === el.configOverlay) closeConfig();
+  });
+
+  el.configTextSpeed.addEventListener("input", (e) => {
+    e.stopPropagation();
+    textSpeedLevel = parseInt(e.target.value, 10) || 2;
+    saveTextSpeedPref(textSpeedLevel);
+  });
+  el.configTextSpeed.addEventListener("click", (e) => e.stopPropagation());
+
+  el.configBgmVolume.addEventListener("input", (e) => {
+    e.stopPropagation();
+    AudioManager.setBgmVolume(parseInt(e.target.value, 10) / 100);
+  });
+  el.configBgmVolume.addEventListener("click", (e) => e.stopPropagation());
+
+  el.configSeVolume.addEventListener("input", (e) => {
+    e.stopPropagation();
+    AudioManager.setSeVolume(parseInt(e.target.value, 10) / 100);
+  });
+  el.configSeVolume.addEventListener("click", (e) => e.stopPropagation());
+
+  el.btnConfigTitle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeConfig();
+    lastBgmSceneKey = null;
+    AudioManager.stopBgm();
+    showScreen("title");
   });
 
   el.inputPlayerName.addEventListener("keydown", (e) => {

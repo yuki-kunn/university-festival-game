@@ -13,9 +13,11 @@ window.AudioManager = (() => {
   "use strict";
 
   const BGM_CROSSFADE_MS = 1500;
-  const BGM_VOLUME = 0.55;
-  const SE_VOLUME = 0.7;
+  const BGM_VOLUME_DEFAULT = 0.55;
+  const SE_VOLUME_DEFAULT = 0.7;
   const MUTE_STORAGE_KEY = "alibi_audio_muted";
+  const BGM_VOLUME_STORAGE_KEY = "alibi_bgm_volume";
+  const SE_VOLUME_STORAGE_KEY = "alibi_se_volume";
 
   // 効果音は本来ワンショットの短い音を想定しているが、素材によっては
   // 想定より大幅に長いことがあり（実測: click 1.0s, broadcast_noise 2.3s,
@@ -40,6 +42,8 @@ window.AudioManager = (() => {
   let muted = loadMutedPref();
   let unlocked = false; // ユーザー操作前は再生できないため、要求を保留する
   let pendingBgmKey = null;
+  let bgmVolume = loadVolumePref(BGM_VOLUME_STORAGE_KEY, BGM_VOLUME_DEFAULT);
+  let seVolume = loadVolumePref(SE_VOLUME_STORAGE_KEY, SE_VOLUME_DEFAULT);
 
   function loadMutedPref() {
     try {
@@ -52,6 +56,25 @@ window.AudioManager = (() => {
   function saveMutedPref(value) {
     try {
       localStorage.setItem(MUTE_STORAGE_KEY, value ? "1" : "0");
+    } catch (err) {
+      // 保存できなくても致命的ではないので無視する
+    }
+  }
+
+  function loadVolumePref(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw === null) return fallback;
+      const v = parseFloat(raw);
+      return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : fallback;
+    } catch (err) {
+      return fallback;
+    }
+  }
+
+  function saveVolumePref(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
     } catch (err) {
       // 保存できなくても致命的ではないので無視する
     }
@@ -92,7 +115,7 @@ window.AudioManager = (() => {
     const playPromise = inPlayer.play();
     if (playPromise && playPromise.catch) playPromise.catch(() => {});
 
-    fade(inPlayer, 0, BGM_VOLUME, BGM_CROSSFADE_MS);
+    fade(inPlayer, 0, bgmVolume, BGM_CROSSFADE_MS);
     fade(outPlayer, outPlayer.volume, 0, BGM_CROSSFADE_MS);
     setTimeout(() => { if (outPlayer !== bgmPlayers[activeBgmIndex]) outPlayer.pause(); }, BGM_CROSSFADE_MS + 50);
   }
@@ -128,7 +151,7 @@ window.AudioManager = (() => {
     if (prev) stopSe(prev, 0);
 
     const audio = new Audio(src);
-    audio.volume = SE_VOLUME;
+    audio.volume = seVolume;
     activeSePlayers.set(key, audio);
 
     const clearIfCurrent = () => {
@@ -169,6 +192,31 @@ window.AudioManager = (() => {
     return muted;
   }
 
+  function setBgmVolume(value) {
+    bgmVolume = Math.max(0, Math.min(1, value));
+    saveVolumePref(BGM_VOLUME_STORAGE_KEY, bgmVolume);
+    // クロスフェード中でなければ、現在再生中のプレイヤーは音量>0の方。
+    // フェード演出の途中で上書きすると不自然なので、鳴っている方だけ
+    // 即座に新しい音量へ合わせる。
+    if (!muted && currentBgmKey) {
+      const playing = bgmPlayers.find(p => p.volume > 0);
+      if (playing) playing.volume = bgmVolume;
+    }
+  }
+
+  function getBgmVolume() {
+    return bgmVolume;
+  }
+
+  function setSeVolume(value) {
+    seVolume = Math.max(0, Math.min(1, value));
+    saveVolumePref(SE_VOLUME_STORAGE_KEY, seVolume);
+  }
+
+  function getSeVolume() {
+    return seVolume;
+  }
+
   // ユーザーの最初のクリック/タップ/キー操作で、保留していたBGM再生要求を解放する
   function unlockOnce() {
     if (unlocked) return;
@@ -184,5 +232,8 @@ window.AudioManager = (() => {
     window.addEventListener(evt, unlockOnce, { once: true, passive: true });
   });
 
-  return { playBgm, stopBgm, playSe, setMuted, isMuted };
+  return {
+    playBgm, stopBgm, playSe, setMuted, isMuted,
+    setBgmVolume, getBgmVolume, setSeVolume, getSeVolume
+  };
 })();
