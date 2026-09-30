@@ -19,37 +19,6 @@
 
   const NOT_IMPLEMENTED_ROUTES = {};
 
-  // ---- 分岐点（ルート開始地点）からの再開 ----
-  // 「共通導入→マリコ/ニコ/ニナのルート選択」の分岐点のみをセーブ対象とする。
-  // ルート開始のタイミングでプレイヤー名・性別・選択ルートIDを保存し、
-  // タイトル画面の「つづきから」で復元する。
-  const SAVE_STORAGE_KEY = "alibi_save_route_start";
-
-  function saveRouteCheckpoint(routeId) {
-    try {
-      const data = {
-        routeId,
-        playerName: state.playthrough.playerName,
-        playerGender: state.playthrough.playerGender
-      };
-      localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
-    } catch (err) {
-      // 保存できなくても致命的ではないので無視する
-    }
-  }
-
-  function loadRouteCheckpoint() {
-    try {
-      const raw = localStorage.getItem(SAVE_STORAGE_KEY);
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (!data || !SCRIPT_SOURCES[data.routeId]) return null;
-      return data;
-    } catch (err) {
-      return null;
-    }
-  }
-
   const scriptCache = {};
   const quizDataCache = {}; // routeId -> クイズデータ
   let endingsData = null;
@@ -131,6 +100,13 @@
       playerGender: "m" // "m" | "f"。名前入力画面の性別選択で変更される
     }
   };
+
+  // タイトル画面の「ルート選択へ（スキップ）」は、特定プレイヤーの進行状況を保存する
+  // ものではなく、「共通導入→ルート選択」の分岐点まで一気に進める
+  // ショートカット機能。誰が押しても同じ場所（分岐選択画面）へ進む。
+  // 名前入力画面自体は「はじめる」「ルート選択へ（スキップ）」共通のため、このフラグで
+  // 名前確定後の遷移先だけを切り替える。
+  let skipToRouteChoice = false;
 
   const DEFAULT_PLAYER_NAME = "＜主人公＞";
 
@@ -291,9 +267,6 @@
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
     el.screens[name].classList.add("active");
-    if (name === "title") {
-      el.btnContinue.hidden = !loadRouteCheckpoint();
-    }
   }
 
   // シナリオ・クイズ・エンディングデータの読み込みに失敗した場合の
@@ -618,7 +591,6 @@
     // 取得が一瞬で終わる場合（キャッシュ済み等）はローディング画面を出さない。
     const group = ROUTE_ASSET_GROUP[scriptId];
     if (group) {
-      saveRouteCheckpoint(scriptId);
       await withLoadingScreen(AssetCache.fetchGroup(group), "調査の準備をしています…");
     }
 
@@ -655,33 +627,21 @@
   });
 
   el.btnStart.addEventListener("click", () => {
+    skipToRouteChoice = false;
     el.inputPlayerName.value = "";
     showScreen("nameInput");
     el.inputPlayerName.focus();
   });
 
+  // 「ルート選択へ（スキップ）」は特定プレイヤーの進行状況を復元するものではなく、
+  // 共通導入→ルート選択の分岐点まで進めるショートカット。名前入力画面は
+  // 「はじめる」と共通のまま、名前確定後の遷移先だけを切り替える。
   el.btnContinue.addEventListener("click", () => {
-    continueFromCheckpoint();
+    skipToRouteChoice = true;
+    el.inputPlayerName.value = "";
+    showScreen("nameInput");
+    el.inputPlayerName.focus();
   });
-
-  async function continueFromCheckpoint() {
-    const save = loadRouteCheckpoint();
-    if (!save) return; // ボタンが表示されている以上通常起きないが、念のため
-
-    state.playthrough.playerName = save.playerName || DEFAULT_PLAYER_NAME;
-    state.playthrough.playerGender = save.playerGender === "f" ? "f" : "m";
-    lastBgmSceneKey = null;
-
-    await withLoadingScreen(AssetCache.fetchGroup("common"), "物語の準備をしています…");
-    AssetCache.fetchGroup("extras");
-
-    const group = ROUTE_ASSET_GROUP[save.routeId];
-    if (group) {
-      await withLoadingScreen(AssetCache.fetchGroup(group), "調査の準備をしています…");
-    }
-
-    await startScript(save.routeId);
-  }
 
   el.btnNameConfirm.addEventListener("click", () => {
     confirmPlayerNameAndStart();
@@ -775,7 +735,28 @@
     // 集合写真(group_photo_m/f)は共通導入の後半で使うが、common程急ぎではないため
     // 取得完了を待たずバックグラウンドで先読みしておく
     AssetCache.fetchGroup("extras");
-    startScript("common_intro");
+
+    if (skipToRouteChoice) {
+      await startRouteChoiceDirectly();
+    } else {
+      startScript("common_intro");
+    }
+  }
+
+  // 「ルート選択へ（スキップ）」用：共通導入（common_intro）の本文は再生せず、
+  // その末尾にあるルート選択肢だけを直接表示する。
+  async function startRouteChoiceDirectly() {
+    const script = await loadScript("common_intro");
+    if (!script) return; // 読み込み失敗時はloadScript内で既にエラー画面表示済み
+    state.currentScriptId = "common_intro";
+    state.lines = script.lines;
+    state.index = script.lines.length; // 本文は表示済み扱いにする
+    lastBgmSceneKey = null;
+    showScreen("novel");
+    const bg = setBackground(state.currentScriptId, state.index);
+    setCharacterPlaceholder(null, state.currentScriptId, state.index, bg);
+    updateSceneAudio(state.currentScriptId, state.index);
+    showChoice(script.choice);
   }
 
   el.btnBackTitle.addEventListener("click", () => {
