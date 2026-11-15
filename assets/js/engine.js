@@ -537,6 +537,7 @@
 
   function advance() {
     if (!el.itemViewer.hidden) return;
+    if (isLeavingChoice) return; // 選択肢を選んだあと、次の台本が始まるまでは進めない
     AudioManager.playSe("click");
     if (state.isTyping) {
       skipTyping();
@@ -555,6 +556,8 @@
     renderLine();
   }
 
+  let isLeavingChoice = false;
+
   function showChoice(choice) {
     el.choicePrompt.textContent = choice.prompt;
     el.choiceList.innerHTML = "";
@@ -568,7 +571,12 @@
         if (opt.bond) {
           state.playthrough.bond = opt.bond;
         }
-        goToNext(opt.next);
+        // 選んだ直後〜次の台本/クイズの表示が始まるまで（素材の取得待ちを含む）の間に
+        // 画面をクリックされても、元の台本が進んで選択肢が再表示されないようにする
+        isLeavingChoice = true;
+        goToNext(opt.next).finally(() => {
+          isLeavingChoice = false;
+        });
       });
       el.choiceList.appendChild(btn);
     });
