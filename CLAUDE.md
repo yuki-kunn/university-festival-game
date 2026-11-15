@@ -187,11 +187,15 @@ Issue 作成時は以下の形式で記述
 - **リポジトリ**: GitHub
 
 ### ローカルセットアップ
+静的サイトのため、ビルドは配信ファイルを `dist/` に集めるだけ。
 ```bash
 git clone https://github.com/yuki-kunn/university-festival-game.git
 cd university-festival-game
-npm install
-npm run dev
+npm ci
+npm run build                      # dist/ を作成
+npx playwright install chromium    # 初回のみ
+npm test                           # データ検証 + 通しプレイのスモークテスト
+python3 -m http.server -d dist     # ローカルで遊ぶ（http://localhost:8000）
 ```
 
 ### ブランチ管理
@@ -204,6 +208,24 @@ git pull origin develop
 # 新規機能ブランチ作成
 git checkout -b feature/{issue-number}-{title}
 ```
+
+---
+
+## 🤖 CI/CD
+
+GitHub Actions（`.github/workflows/ci.yml`）で自動実行される。
+
+| トリガー | 内容 |
+|----------|------|
+| PR（main / develop 向け） | ビルド + データ検証 + スモークテスト + 素材の死活確認 |
+| develop / main への push | 上記 + Cloudflare Pages へデプロイ（main=本番、develop=プレビュー） |
+
+- データ検証（`tests/data.test.mjs`）: 台本・クイズ・エンディングのJSONと、エンジン（`engine.js`）・素材設定（`asset-config.js` / `audio-config.js`）の整合性を確認する。選択肢の遷移先、クイズの正解カード、全ルートの3種のエンディング、話者・小道具・素材ID・BGMキーなど。台本やデータを変更したら必ず通す
+- スモークテスト（`tests/smoke.mjs`）: 画像・音声（R2）・Webフォントへの通信をスタブにして、3ルートを通しでプレイし、3種のエンディングまで到達できることを確認する
+- 素材の死活確認（`tests/assets.check.mjs`）: R2上の画像・音声が実在するかを確認する。外部ネットワークに依存するため、失敗してもCI全体は止めない（ログで確認する）。`npm run check:assets` で手元でも実行できる
+- デプロイには GitHub の Secrets `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` が必要。未登録の間はデプロイのみスキップされる
+- 配信するのは `dist/`（`index.html` / `assets/` / `data/`）のみ。`scenario/` や開発ドキュメントは配信されない
+- **main は本番**。develop から main へのPRをマージすると、本番が更新される
 
 ---
 
@@ -228,7 +250,7 @@ PR をマージする前に、以下を確認
 
 - [ ] Issue 番号がブランチ名に含まれている
 - [ ] コミットメッセージが形式に従っている
-- [ ] テストが通っている
+- [ ] CI（ビルド・データ検証・スモークテスト）が通っている
 - [ ] ドキュメントが更新されている（必要に応じて）
 - [ ] コードレビューが完了している
 

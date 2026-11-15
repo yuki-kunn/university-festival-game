@@ -2,6 +2,19 @@
 
 大学文化祭で展示するゲーム「不在証明」。
 
+## 開発・テスト
+
+```bash
+npm ci
+npm run build
+npx playwright install chromium   # 初回のみ
+npm test                          # データ検証 + 通しプレイのスモークテスト
+npm run check:assets              # R2上の画像・音声の死活確認（ネットワーク）
+```
+
+PR と push では GitHub Actions が同じビルド・テストを実行し、develop / main への push 後は
+Cloudflare Pages へデプロイします（詳細は [CLAUDE.md](./CLAUDE.md)）。
+
 ## 素材配信について
 
 キャラクター立ち絵・背景画像・BGM・効果音は、すべて Cloudflare R2
