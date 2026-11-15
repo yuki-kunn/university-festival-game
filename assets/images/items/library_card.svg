@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="cardGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#2e2a3a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#14121a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="paperGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eee7d6"/>
+      <stop offset="100%" stop-color="#d9cfb8"/>
+    </linearGradient>
+    <filter id="paperTexture" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5" result="noise"/>
+      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+      <feComposite operator="over" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="400" height="400" fill="#0e0c13"/>
+  <ellipse cx="200" cy="190" rx="180" ry="150" fill="url(#cardGlow)"/>
+
+  <!-- カード本体：わずかに傾けて年季を表現 -->
+  <g transform="rotate(-2 200 200)">
+    <rect x="70" y="70" width="260" height="260" rx="4" fill="url(#paperGrad)" filter="url(#paperTexture)"/>
+    <rect x="70" y="70" width="260" height="260" rx="4" fill="none" stroke="#a89a78" stroke-width="1.5"/>
+
+    <!-- シミ・経年劣化 -->
+    <ellipse cx="300" cy="100" rx="22" ry="14" fill="#b8a878" opacity="0.25"/>
+    <ellipse cx="95" cy="310" rx="18" ry="26" fill="#b8a878" opacity="0.2"/>
+    <ellipse cx="250" cy="290" rx="12" ry="8" fill="#a89868" opacity="0.2"/>
+
+    <!-- 角の折れ -->
+    <path d="M 310 70 L 330 70 L 330 90 Z" fill="#c9bc9e"/>
+
+    <!-- タイトル -->
+    <text x="200" y="105" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="19" fill="#3a3226" text-anchor="middle" letter-spacing="2">図　書　貸　出　票</text>
+    <line x1="90" y1="118" x2="310" y2="118" stroke="#8a7c5c" stroke-width="1.2"/>
+
+    <!-- 罫線と記入項目 -->
+    <text x="90" y="148" font-family="sans-serif" font-size="12" fill="#5a4f3a">氏名</text>
+    <line x1="130" y1="150" x2="310" y2="150" stroke="#8a7c5c" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <text x="150" y="147" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="14" fill="#2a2318">＿＿＿＿＿＿＿＿＿</text>
+
+    <text x="90" y="180" font-family="sans-serif" font-size="12" fill="#5a4f3a">組・番</text>
+    <line x1="140" y1="182" x2="310" y2="182" stroke="#8a7c5c" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <text x="150" y="179" font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="13" fill="#2a2318">2年3組</text>
+
+    <line x1="90" y1="200" x2="310" y2="200" stroke="#8a7c5c" stroke-width="1"/>
+
+    <!-- 貸出記録テーブル -->
+    <text x="90" y="222" font-family="sans-serif" font-size="10.5" fill="#6a5f48">貸出日</text>
+    <text x="180" y="222" font-family="sans-serif" font-size="10.5" fill="#6a5f48">書名</text>
+    <text x="290" y="222" font-family="sans-serif" font-size="10.5" fill="#6a5f48">返却</text>
+    <line x1="90" y1="228" x2="310" y2="228" stroke="#8a7c5c" stroke-width="0.6"/>
+
+    <g font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="11.5" fill="#2a2318">
+      <text x="90" y="248">＊/6/2</text>
+      <text x="160" y="248">郷土伝承と怪異譚</text>
+      <text x="288" y="248">済</text>
+
+      <text x="90" y="268">＊/6/9</text>
+      <text x="160" y="268">栗川学園　創立史</text>
+      <text x="288" y="268">済</text>
+
+      <text x="90" y="288">＊/6/15</text>
+      <text x="160" y="288">地下建築と伝説</text>
+      <text x="290" y="288">―</text>
+    </g>
+
+    <!-- 最後の1行だけ強調（未返却・以降途絶える） -->
+    <rect x="85" y="278" width="230" height="16" fill="#c8412e" opacity="0.08"/>
+    <text x="90" y="310" font-family="sans-serif" font-size="9" fill="#8a5040" font-style="italic">※以降の貸出記録なし</text>
+  </g>
+</svg>
