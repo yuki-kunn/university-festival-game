@@ -180,8 +180,25 @@ await playRoute({ routeId: "route_nina", optionIndex: 2, gender: "m", bond: "goo
     assert(await isVisible(page, "#config-overlay"), "設定画面が開かない");
     await page.click("#btn-config-close");
     assert(!(await isVisible(page, "#config-overlay")), "設定画面が閉じない");
+
+    // ホームボタン: タイトル以外で表示され、1回押しでは戻らず（誤操作防止）、2回目で戻る。猶予を過ぎると元の表示に戻る
+    assert(await isVisible(page, "#btn-home"), "ホームボタンが表示されていない");
+    await page.click("#btn-home");
+    assert((await page.textContent("#btn-home")).includes("もう一度"), "1回押しで確認表示にならない");
+    assert(await page.evaluate(() => document.getElementById("screen-novel").classList.contains("active")), "1回押しでホームへ戻ってしまった");
+    await page.waitForFunction(() => document.getElementById("btn-home").textContent === "ホーム", null, { timeout: 5000 });
+    await page.click("#btn-home");
+    await page.click("#btn-home");
+    await page.waitForSelector("#screen-title.active");
+    assert(!(await isVisible(page, "#btn-home")), "タイトル画面にホームボタンが表示されている");
+    // 設定メニューの「タイトルへ戻る」も従来どおり動く
+    await page.click("#btn-start");
+    await page.waitForSelector("#screen-name-input.active");
+    await page.click("#btn-config-open");
+    await page.click("#btn-config-title");
+    await page.waitForSelector("#screen-title.active");
     assert(errors.length === 0, `ブラウザエラー: ${errors.join(" | ")}`);
-    console.log("PASS ルート選択スキップ・設定・ミュート");
+    console.log("PASS ルート選択スキップ・設定・ミュート・ホームボタン");
   } catch (e) {
     failures.push(`UI: ${e.message}`);
     console.error(`FAIL UI: ${e.message}`);
