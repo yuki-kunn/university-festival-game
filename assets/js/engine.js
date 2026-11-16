@@ -41,6 +41,7 @@
     btnGenderM: document.getElementById("btn-gender-m"),
     btnGenderF: document.getElementById("btn-gender-f"),
     btnMuteToggle: document.getElementById("btn-mute-toggle"),
+    btnHome: document.getElementById("btn-home"),
     btnBackTitle: document.getElementById("btn-back-title"),
     btnRestart: document.getElementById("btn-restart"),
 
@@ -267,6 +268,7 @@
   function showScreen(name) {
     Object.values(el.screens).forEach(s => s.classList.remove("active"));
     el.screens[name].classList.add("active");
+    document.body.dataset.screen = name; // CSSで、タイトル画面だけホームボタンを隠すために使う
   }
 
   // シナリオ・クイズ・エンディングデータの読み込みに失敗した場合の
@@ -720,12 +722,39 @@
   });
   el.configSeVolume.addEventListener("click", (e) => e.stopPropagation());
 
-  el.btnConfigTitle.addEventListener("click", (e) => {
-    e.stopPropagation();
+  // タイトルへ戻る（設定メニューの「タイトルへ戻る」とホームボタンで共通）
+  function returnToTitle() {
     closeConfig();
     lastBgmSceneKey = null;
     AudioManager.stopBgm();
     showScreen("title");
+  }
+
+  el.btnConfigTitle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    returnToTitle();
+  });
+
+  // ホームボタン: 進行中のプレイを失わないよう、1回目は確認表示にして、2秒以内の2回目で戻る
+  const HOME_CONFIRM_MS = 2000;
+  let homeConfirmTimer = null;
+  function disarmHomeButton() {
+    clearTimeout(homeConfirmTimer);
+    homeConfirmTimer = null;
+    el.btnHome.classList.remove("armed");
+    el.btnHome.textContent = "ホーム";
+  }
+  el.btnHome.addEventListener("click", (e) => {
+    e.stopPropagation(); // ノベル画面クリックでのテキスト送りに巻き込まれないようにする
+    AudioManager.playSe("click");
+    if (homeConfirmTimer === null) {
+      el.btnHome.classList.add("armed");
+      el.btnHome.textContent = "もう一度押すとホームへ";
+      homeConfirmTimer = setTimeout(disarmHomeButton, HOME_CONFIRM_MS);
+      return;
+    }
+    disarmHomeButton();
+    returnToTitle();
   });
 
   el.inputPlayerName.addEventListener("keydown", (e) => {
